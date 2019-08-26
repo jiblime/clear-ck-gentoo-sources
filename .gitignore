@@ -35,7 +35,7 @@
 *.o
 *.o.*
 *.order
-*.patch
+#*.patch
 *.s
 *.so
 *.so.dbg
@@ -100,7 +100,7 @@ modules.builtin
 /arch/*/include/generated/
 
 # stgit generated dirs
-patches-*
+#patches-*
 
 # quilt's files - I love quilts
 # patches
