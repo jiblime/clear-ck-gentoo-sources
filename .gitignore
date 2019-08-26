@@ -131,6 +131,8 @@ signing_key.pem
 signing_key.priv
 signing_key.x509
 x509.genkey
+sign.sh
+kernel_key.pem
 
 # Kconfig presets
 /all.config
