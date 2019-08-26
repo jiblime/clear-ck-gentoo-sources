@@ -93,3 +93,4 @@ genpatches/1005_linux-5.2.6.patch
 genpatches/1006_linux-5.2.7.patch
 genpatches/1007_linux-5.2.8.patch
 genpatches/1008_linux-5.2.9.patch
+genpatches/1009_linux-5.2.10.patch
