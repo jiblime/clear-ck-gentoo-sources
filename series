@@ -1,78 +1,11 @@
-ck-193/0001-MultiQueue-Skiplist-Scheduler-version-0.193.patch
-ck-193/0002-Fix-Werror-build-failure-in-tools.patch
-ck-193/0003-Make-preemptible-kernel-default.patch
-ck-193/0004-Expose-vmsplit-for-our-poor-32-bit-users.patch
-ck-193/0005-Create-highres-timeout-variants-of-schedule_timeout-.patch
-ck-193/0006-Special-case-calls-of-schedule_timeout-1-to-use-the-.patch
-ck-193/0007-Convert-msleep-to-use-hrtimers-when-active.patch
-ck-193/0008-Replace-all-schedule-timeout-1-with-schedule_min_hrt.patch
-ck-193/0009-Replace-all-calls-to-schedule_timeout_interruptible-.patch
-ck-193/0010-Replace-all-calls-to-schedule_timeout_uninterruptibl.patch
-ck-193/0011-Don-t-use-hrtimer-overlay-when-pm_freezing-since-som.patch
-ck-193/0012-Make-hrtimer-granularity-and-minimum-hrtimeout-confi.patch
-ck-193/0013-Make-threaded-IRQs-optionally-the-default-which-can-.patch
-ck-193/0014-Reinstate-default-Hz-of-100-in-combination-with-MuQS.patch
-# ck-193/0015-Swap-sucks.patch  # I like swap
-ck-193/0016-Make-nohz_full-not-be-picked-up-as-a-default-config-.patch
-# ck-193/0017-Add-ck1-version.patch  # I have previously had issues with symlink naming, YMMV
+#  ck patchset - 0017-Add-ck1-version.patch
+ck-193.patch
 
-clear/0051-fpga-dfl-fme-mgr-fix-FME_PR_INTFC_ID-register-addres.patch
-clear/0052-fpga-dfl-fme-remove-copy_to_user-in-ioctl-for-PR.patch
-clear/0053-fpga-dfl-fme-align-PR-buffer-size-per-PR-datawidth.patch
-clear/0054-fpga-dfl-fme-support-512bit-data-width-PR.patch
-clear/0055-fpga-dfl-fme-add-DFL_FPGA_FME_PORT_RELEASE-ASSIGN-io.patch
-clear/0056-fpga-dfl-pci-enable-SRIOV-support.patch
-clear/0057-fpga-dfl-afu-add-AFU-state-related-sysfs-interfaces.patch
-clear/0058-fpga-dfl-afu-add-userclock-sysfs-interfaces.patch
-clear/0059-fpga-dfl-add-id_table-for-dfl-private-feature-driver.patch
-clear/0060-fpga-dfl-afu-export-__port_enable-disable-function.patch
-clear/0061-fpga-dfl-afu-add-error-reporting-support.patch
-clear/0062-fpga-dfl-afu-add-STP-SignalTap-support.patch
-clear/0063-fpga-dfl-fme-add-capability-sysfs-interfaces.patch
-clear/0064-fpga-dfl-fme-add-global-error-reporting-support.patch
-clear/0065-fpga-dfl-fme-add-thermal-management-support.patch
-clear/0066-fpga-dfl-fme-add-power-management-support.patch
-clear/0067-fpga-dfl-fme-add-performance-reporting-support.patch
-clear/0101-i8042-decrease-debug-message-level-to-info.patch
-clear/0102-Increase-the-ext4-default-commit-age.patch
-clear/0103-silence-rapl.patch
-clear/0104-pci-pme-wakeups.patch
-clear/0105-ksm-wakeups.patch
-#clear/0106-intel_idle-tweak-cpuidle-cstates.patch
-clear/0107-bootstats-add-printk-s-to-measure-boot-time-in-more-.patch
-clear/0108-smpboot-reuse-timer-calibration.patch
-clear/0109-raid6-add-Kconfig-option-to-skip-raid6-benchmarking.patch
-clear/0110-Initialize-ata-before-graphics.patch
-clear/0111-reduce-e1000e-boot-time-by-tightening-sleep-ranges.patch
-clear/0112-give-rdrand-some-credit.patch
-clear/0113-ipv4-tcp-allow-the-memory-tuning-for-tcp-to-go-a-lit.patch
-clear/0114-e1000e-increase-pause-and-refresh-time.patch
-clear/0115-kernel-time-reduce-ntp-wakeups.patch
-clear/0116-init-wait-for-partition-and-retry-scan.patch
-clear/0117-print-fsync-count-for-bootchart.patch
-# clear/0118-Add-boot-option-to-allow-unsigned-modules.patch
-# clear/0119-Enable-stateless-firmware-loading.patch
-# clear/0120-Migrate-some-systemd-defaults-to-the-kernel-defaults.patch
-#	Appears to be fixes for Clear Linux's distro specific quirks.
-clear/0121-xattr-allow-setting-user.-attributes-on-symlinks-by-.patch
-# clear/0122-add-scheduler-turbo3-patch.patch
-# clear/0123-use-lfence-instead-of-rep-and-nop.patch
-#	Build failure due to missing Intel patch.
-clear/0124-do-accept-in-LIFO-order-for-cache-efficiency.patch
-#clear/0125-zero-extra-registers.patch
-#clear/0126-locking-rwsem-spin-faster.patch
-#	Build failure due to missing Intel patch.
-clear/0127-thp-fix.patch
-clear/0128-ata-libahci-ignore-staggered-spin-up.patch
-clear/1001-WireGuard-fast-modern-secure-kernel-VPN-tunnel.patch
-clear/CVE-2019-12379.patch
-clear/CVE-2019-12454.patch
-clear/CVE-2019-12455.patch
-clear/CVE-2019-12456.patch
-clear/CVE-2019-15117.patch
-clear/force-load-ucode.patch
-clear/force-with-reload2.patch
+#  5.2-5.2.14 patch
+5.2-5.2.14.patch
 
+# Clear Linux
+clear.patch
 
 gentoo-flavor/1500_XATTR_USER_PREFIX.patch
 gentoo-flavor/1510_fs-enable-link-security-restrictions-by-default.patch
@@ -83,14 +16,4 @@ gentoo-flavor/4567_distro-Gentoo-Kconfig.patch
 # gentoo/5011_enable-cpu-optimizations-for-gcc8.patch
 #       Replaced with a newer version.
 graysky2/enable_additional_cpu_optimizations_for_gcc_v9.1+_kernel_v4.13+.patch
-
-genpatches/1000_linux-5.2.1.patch
-genpatches/1001_linux-5.2.2.patch
-genpatches/1002_linux-5.2.3.patch
-genpatches/1003_linux-5.2.4.patch
-genpatches/1004_linux-5.2.5.patch
-genpatches/1005_linux-5.2.6.patch
-genpatches/1006_linux-5.2.7.patch
-genpatches/1007_linux-5.2.8.patch
-genpatches/1008_linux-5.2.9.patch
-genpatches/1009_linux-5.2.10.patch
+treewide-fix-awk-regexp-over-escaping.patch

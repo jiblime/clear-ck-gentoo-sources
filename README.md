@@ -1,3 +1,5 @@
+Note: [y/n] prompts only respond to y
+
 **Preface:** This is a collection of patchsets for applying to bare GNU/Linux kernels for the Gentoo GNU/Linux distribution. These patchsets are meant to be applied to a vanilla Linux kernel with no sublevel. Using dev-util/quilt is recommended to handle patching.
 
 #### clearly-faster-gentoo-sources-ck1

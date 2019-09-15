@@ -1,0 +1,3 @@
+[submodule "clear"]
+	path = submod-clear
+	url = https://github.com/clearlinux-pkgs/linux.git
