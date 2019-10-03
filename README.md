@@ -1,5 +1,3 @@
-Note: [y/n] prompts only respond to y
-
 **Preface:** This is a collection of patchsets for applying to bare GNU/Linux kernels for the Gentoo GNU/Linux distribution. These patchsets are meant to be applied to a vanilla Linux kernel with no sublevel. Using dev-util/quilt is recommended to handle patching.
 
 #### clearly-faster-gentoo-sources-ck1
@@ -74,9 +72,11 @@ mv linux-5.2 linux-5.2.9
 eselect kernel set linux-5.2.9
 cd /usr/src/linux
 
-git clone --branch 5.2.9 https://github.com/jiblime/clear-ck-gentoo-sources.git patches
+git clone https://github.com/jiblime/clear-ck-gentoo-sources.git patches
+cd patches
 git submodule update --init submod-clear
-
+cd submod-clear; git checkout 5.2.17-836; cd ..
+./clear-patch-selector.sh
 
 # Below is a simple script to get your current .config into the directory quickly.
 # It first checks /proc/config.gz then /boot. All you need to do is copy/paste it into terminal.
