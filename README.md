@@ -75,6 +75,7 @@ eselect kernel set linux-5.2.9
 cd /usr/src/linux
 
 git clone --branch 5.2.9 https://github.com/jiblime/clear-ck-gentoo-sources.git patches
+git submodule update --init submod-clear
 
 
 # Below is a simple script to get your current .config into the directory quickly.

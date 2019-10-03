@@ -1,19 +1,48 @@
-#  ck patchset - 0017-Add-ck1-version.patch
+# ck patchset
+# 0001-MultiQueue-Skiplist-Scheduler-version-0.193.patch
+# 0002-Fix-Werror-build-failure-in-tools.patch
+# 0003-Make-preemptible-kernel-default.patch
+# 0004-Expose-vmsplit-for-our-poor-32-bit-users.patch
+# 0005-Create-highres-timeout-variants-of-schedule_timeout-.patch
+# 0006-Special-case-calls-of-schedule_timeout-1-to-use-the-.patch
+# 0007-Convert-msleep-to-use-hrtimers-when-active.patch
+# 0008-Replace-all-schedule-timeout-1-with-schedule_min_hrt.patch
+# 0009-Replace-all-calls-to-schedule_timeout_interruptible-.patch
+# 0010-Replace-all-calls-to-schedule_timeout_uninterruptibl.patch
+# 0011-Don-t-use-hrtimer-overlay-when-pm_freezing-since-som.patch
+# 0012-Make-hrtimer-granularity-and-minimum-hrtimeout-confi.patch
+# 0013-Make-threaded-IRQs-optionally-the-default-which-can-.patch
+# 0014-Reinstate-default-Hz-of-100-in-combination-with-MuQS.patch
+# 0015-Swap-sucks.patch
+# 0016-Make-nohz_full-not-be-picked-up-as-a-default-config-.patch
 ck-193.patch
 
-#  5.2-5.2.14 patch
-5.2-5.2.14.patch
+# Incremental patches go here
+5.2-5.2.18.patch
 
 # Clear Linux
-clear.patch
+# Use ./clear-patch-selector.sh to generate this patch.
+# It should be compatiable with AMD/Intel as well as other distros.
+generated/clear.patch
 
-gentoo-flavor/1500_XATTR_USER_PREFIX.patch
-gentoo-flavor/1510_fs-enable-link-security-restrictions-by-default.patch
-gentoo-flavor/2000_BT-Check-key-sizes-only-if-Secure-Simple-Pairing-enabled.patch
-gentoo-flavor/2500_usb-storage-Disable-UAS-on-JMicron-SATA-enclosure.patch
-gentoo-flavor/2600_enable-key-swapping-for-apple-mac.patch
-gentoo-flavor/4567_distro-Gentoo-Kconfig.patch
-# gentoo/5011_enable-cpu-optimizations-for-gcc8.patch
-#       Replaced with a newer version.
+
+# graysky2's patch to allow GCC to optimize compilation based on processor.
 graysky2/enable_additional_cpu_optimizations_for_gcc_v9.1+_kernel_v4.13+.patch
-treewide-fix-awk-regexp-over-escaping.patch
+
+# Fix to enable sensor detection for newer Ryzen processors
+misc/amd-k10.patch
+
+# Fixes breakage with "systemd-timesyncd, systemd-random-seed, haveged and everything else that has ConditionVirtualization=!container in its unit file."
+misc/fix-systemd-detect-virt.patch
+
+# Gentoo specific patches.
+# 1500_XATTR_USER_PREFIX.patch
+# 1510_fs-enable-link-security-restrictions-by-default.patch
+# 2000_BT-Check-key-sizes-only-if-Secure-Simple-Pairing-enabled.patch
+# 2500_usb-storage-Disable-UAS-on-JMicron-SATA-enclosure.patch
+# 2600_enable-key-swapping-for-apple-mac.patch
+# 4567_distro-Gentoo-Kconfig.patch
+misc/gentoo-flavor-5.2.patch
+
+# Fixes kernel tree imcompat with gawk >=5.0
+misc/treewide-fix-awk-regexp-over-escaping.patch
