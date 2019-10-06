@@ -66,27 +66,27 @@ shopt -s extglob
 
 #  Excluded Clear Linux patches
 
-cl_distro="0102-Increase-the-ext4-default-commit-age.patch|"
+cl_distro="*-Increase-the-ext4-default-commit-age.patch|"
 # > (DISTRO TWEAK -- NOT FOR UPSTREAM)
-cl_distro+="0107-bootstats-add-printk-s-to-measure-boot-time-in-more-.patch|"
+cl_distro+="*-bootstats-add-printk-s-to-measure-boot-time-in-more-.patch|"
 # > Few distro-tweaks to add printk's to visualize boot time better
-cl_distro+="0116-init-wait-for-partition-and-retry-scan.patch|"
+cl_distro+="*-init-wait-for-partition-and-retry-scan.patch|"
 # Adds a wait period for Clear Linux because it boots too fast
-cl_distro+="0118-Add-boot-option-to-allow-unsigned-modules.patch|"
+cl_distro+="*-Add-boot-option-to-allow-unsigned-modules.patch|"
 # Adds option to allow unsigned modules when Secure Boot is off
-cl_distro+="0119-Enable-stateless-firmware-loading.patch|"
+cl_distro+="*-Enable-stateless-firmware-loading.patch|"
 # Prefers firmware from the (Clear Linux's stateless) user directories first
-cl_distro+="0120-Migrate-some-systemd-defaults-to-the-kernel-defaults.patch|"
+cl_distro+="*-Migrate-some-systemd-defaults-to-the-kernel-defaults.patch|"
 # > These settings are needed to prevent networking issues when the networking modules come up by default without explicit settings
-cl_distro+="0122-add-scheduler-turbo3-patch.patch|"
+cl_distro+="*-add-scheduler-turbo3-patch.patch|"
 # Doesn't work for non CL distros
-cl_distro+="0123-use-lfence-instead-of-rep-and-nop.patch|"
+cl_distro+="*-use-lfence-instead-of-rep-and-nop.patch|"
 # Need to determine if this is already resolved in another way/performance impact.  https://spectreattack.com/spectre.pdf https://newsroom.intel.com/wp-content/uploads/sites/11/2018/01/Intel-Analysis-of-Speculative-Execution-Side-Channels.pdf
-cl_distro+="0125-zero-extra-registers.patch|"
+cl_distro+="*-zero-extra-registers.patch|"
 # Requires GCC patch. https://github.com/clearlinux-pkgs/gcc/blob/master/zero-regs-gcc8.patch
-cl_distro+="0130-x86-microcode-Force-update-a-uCode-even-if-the-rev-i.patch|"
+cl_distro+="*-x86-microcode-Force-update-a-uCode-even-if-the-rev-i.patch|"
 # Intel specific? Unsure of the need for this.
-cl_distro+="0131-x86-microcode-echo-2-reload-to-force-load-ucode.patch"
+cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch"
 # Same as above.
 
 
