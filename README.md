@@ -22,6 +22,9 @@ ck1 patchset
 
 4.19 to 4.19.77 patch
 
+
+Credits to /u/JATmatic on reddit.com and http://coolypf.com/kpgo
+https://reddit.com/r/kernel/comments/a2og7u/the_process_of_building_the_kernel_with_gcc/
 gcov/pgo patchset
 0003-Merged-the-GCOV-patch-from-http-coolypf.com-0001-Add.patch
 0004-Fix-crypto-jitterentropy.c-not-building-with-fprofil.patch

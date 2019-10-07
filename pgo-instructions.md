@@ -1,3 +1,8 @@
+# Credits to /u/JATmatic on reddit.com
+# and http://coolypf.com/kpgo
+
+# https://reddit.com/r/kernel/comments/a2og7u/the_process_of_building_the_kernel_with_gcc/
+
 # In /usr/src/linux, run:
 ./scripts/kgcov/buildGCOVKernel bzImage modules
 
