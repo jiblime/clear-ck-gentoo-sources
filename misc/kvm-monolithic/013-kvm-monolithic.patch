@@ -1,0 +1,41 @@
+https://lkml.org/lkml/2019/9/20/947
+
+KVM: monolithic: x86: inline more exit handlers in vmx.c
+https://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git/commit/?h=kvm-mono1&id=2b7917fcf81d0d2b6e38138898892f4a57e0e9b0
+
+They can be called directly more efficiently, so we can as well mark
+some of them inline in case gcc doesn't decide to inline them.
+
+---
+
+diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
+index ff46008dc514..a6e597025011 100644
+--- a/arch/x86/kvm/vmx/vmx.c
++++ b/arch/x86/kvm/vmx/vmx.c
+@@ -4588,7 +4588,7 @@ static int handle_exception_nmi(struct kvm_vcpu *vcpu)
+ 	return 0;
+ }
+ 
+-static int handle_external_interrupt(struct kvm_vcpu *vcpu)
++static __always_inline int handle_external_interrupt(struct kvm_vcpu *vcpu)
+ {
+ 	++vcpu->stat.irq_exits;
+ 	return 1;
+@@ -4860,7 +4860,7 @@ static void vmx_set_dr7(struct kvm_vcpu *vcpu, unsigned long val)
+ 	vmcs_writel(GUEST_DR7, val);
+ }
+ 
+-static int handle_cpuid(struct kvm_vcpu *vcpu)
++static __always_inline int handle_cpuid(struct kvm_vcpu *vcpu)
+ {
+ 	return kvm_emulate_cpuid(vcpu);
+ }
+@@ -4891,7 +4891,7 @@ static int handle_interrupt_window(struct kvm_vcpu *vcpu)
+ 	return 1;
+ }
+ 
+-static int handle_halt(struct kvm_vcpu *vcpu)
++static __always_inline int handle_halt(struct kvm_vcpu *vcpu)
+ {
+ 	return kvm_emulate_halt(vcpu);
+ }

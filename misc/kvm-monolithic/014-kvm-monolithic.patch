@@ -1,0 +1,46 @@
+https://lkml.org/lkml/2019/9/20/947
+
+KVM: retpolines: x86: eliminate retpoline from vmx.c exit handlers
+https://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git/commit/?h=kvm-mono1&id=1fa8cf1961da1a8f79aebbe87c5dc76bbac8ec9d
+
+It's enough to check the exit value and issue a direct call to avoid
+the retpoline for all the common vmexit reasons.
+
+---
+
+diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
+index a6e597025011..9aa73e216df2 100644
+--- a/arch/x86/kvm/vmx/vmx.c
++++ b/arch/x86/kvm/vmx/vmx.c
+@@ -5866,9 +5866,29 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu)
+ 	}
+ 
+ 	if (exit_reason < kvm_vmx_max_exit_handlers
+-	    && kvm_vmx_exit_handlers[exit_reason])
++	    && kvm_vmx_exit_handlers[exit_reason]) {
++#ifdef CONFIG_RETPOLINE
++		if (exit_reason == EXIT_REASON_MSR_WRITE)
++			return handle_wrmsr(vcpu);
++		else if (exit_reason == EXIT_REASON_PREEMPTION_TIMER)
++			return handle_preemption_timer(vcpu);
++		else if (exit_reason == EXIT_REASON_PENDING_INTERRUPT)
++			return handle_interrupt_window(vcpu);
++		else if (exit_reason == EXIT_REASON_EXTERNAL_INTERRUPT)
++			return handle_external_interrupt(vcpu);
++		else if (exit_reason == EXIT_REASON_HLT)
++			return handle_halt(vcpu);
++		else if (exit_reason == EXIT_REASON_PAUSE_INSTRUCTION)
++			return handle_pause(vcpu);
++		else if (exit_reason == EXIT_REASON_MSR_READ)
++			return handle_rdmsr(vcpu);
++		else if (exit_reason == EXIT_REASON_CPUID)
++			return handle_cpuid(vcpu);
++		else if (exit_reason == EXIT_REASON_EPT_MISCONFIG)
++			return handle_ept_misconfig(vcpu);
++#endif
+ 		return kvm_vmx_exit_handlers[exit_reason](vcpu);
+-	else {
++	} else {
+ 		vcpu_unimpl(vcpu, "vmx: unexpected exit reason 0x%x\n",
+ 				exit_reason);
+ 		dump_vmcs();

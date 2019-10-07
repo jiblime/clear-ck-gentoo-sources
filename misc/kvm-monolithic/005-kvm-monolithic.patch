@@ -1,0 +1,50 @@
+https://lkml.org/lkml/2019/9/20/947
+
+
+KVM: monolithic: x86: enable the kvm_pmu_ops external functions
+https://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git/commit/?h=kvm-mono1&id=75004595500449338cf0af01646fbc908b654378
+
+Plug in the new external functions and their extern declarations in
+the respective kernel modules (kvm-intel and kvm-amd).
+
+---
+
+diff --git a/arch/x86/kvm/pmu.h b/arch/x86/kvm/pmu.h
+index 58265f761c3b..a9c2f68a40cc 100644
+--- a/arch/x86/kvm/pmu.h
++++ b/arch/x86/kvm/pmu.h
+@@ -19,6 +19,8 @@ struct kvm_event_hw_type_mapping {
+ 	unsigned event_type;
+ };
+ 
++#include "pmu_ops.h"
++
+ struct kvm_pmu_ops {
+ 	unsigned (*find_arch_event)(struct kvm_pmu *pmu, u8 event_select,
+ 				    u8 unit_mask);
+diff --git a/arch/x86/kvm/pmu_amd.c b/arch/x86/kvm/pmu_amd.c
+index c8388389a3b0..12d1fa3ba35a 100644
+--- a/arch/x86/kvm/pmu_amd.c
++++ b/arch/x86/kvm/pmu_amd.c
+@@ -301,6 +301,8 @@ static void amd_pmu_reset(struct kvm_vcpu *vcpu)
+ 	}
+ }
+ 
++#include "pmu_amd_ops.c"
++
+ struct kvm_pmu_ops amd_pmu_ops = {
+ 	.find_arch_event = amd_find_arch_event,
+ 	.find_fixed_event = amd_find_fixed_event,
+diff --git a/arch/x86/kvm/vmx/pmu_intel.c b/arch/x86/kvm/vmx/pmu_intel.c
+index 4dea0e0e7e39..5ef36a75c31e 100644
+--- a/arch/x86/kvm/vmx/pmu_intel.c
++++ b/arch/x86/kvm/vmx/pmu_intel.c
+@@ -358,6 +358,8 @@ static void intel_pmu_reset(struct kvm_vcpu *vcpu)
+ 		pmu->global_ovf_ctrl = 0;
+ }
+ 
++#include "pmu_intel_ops.c"
++
+ struct kvm_pmu_ops intel_pmu_ops = {
+ 	.find_arch_event = intel_find_arch_event,
+ 	.find_fixed_event = intel_find_fixed_event,

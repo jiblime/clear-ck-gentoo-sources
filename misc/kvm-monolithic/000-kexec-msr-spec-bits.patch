@@ -1,0 +1,60 @@
+https://lkml.org/lkml/2019/9/20/947
+
+x86: spec_ctrl: fix SPEC_CTRL initialization after kexec
+https://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git/commit/?h=kvm-mono1&id=bae6c68506fac76a7c49231d97b587ed0c7fc9b7
+
+We can't assume the SPEC_CTRL msr is zero at boot because it could be
+left enabled by a previous kernel booted with
+spec_store_bypass_disable=on.
+
+Without this fix a boot with spec_store_bypass_disable=on followed by
+a kexec boot with spec_store_bypass_disable=off would erroneously and
+unexpectedly leave bit 2 set in SPEC_CTRL.
+
+---
+
+diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
+index 20ce682a2540..3ba95728a6fe 100644
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -47,6 +47,8 @@
+ #define SPEC_CTRL_STIBP			BIT(SPEC_CTRL_STIBP_SHIFT)	/* STIBP mask */
+ #define SPEC_CTRL_SSBD_SHIFT		2	   /* Speculative Store Bypass Disable bit */
+ #define SPEC_CTRL_SSBD			BIT(SPEC_CTRL_SSBD_SHIFT)	/* Speculative Store Bypass Disable */
++#define SPEC_CTRL_ALL			(SPEC_CTRL_IBRS|SPEC_CTRL_STIBP| \
++					 SPEC_CTRL_SSBD) /* all known bits */
+ 
+ #define MSR_IA32_PRED_CMD		0x00000049 /* Prediction Command */
+ #define PRED_CMD_IBPB			BIT(0)	   /* Indirect Branch Prediction Barrier */
+diff --git a/arch/x86/kernel/cpu/bugs.c b/arch/x86/kernel/cpu/bugs.c
+index 91c2561b905f..e3922dcf252f 100644
+--- a/arch/x86/kernel/cpu/bugs.c
++++ b/arch/x86/kernel/cpu/bugs.c
+@@ -92,8 +92,26 @@ void __init check_bugs(void)
+ 	 * have unknown values. AMD64_LS_CFG MSR is cached in the early AMD
+ 	 * init code as it is not enumerated and depends on the family.
+ 	 */
+-	if (boot_cpu_has(X86_FEATURE_MSR_SPEC_CTRL))
++	if (boot_cpu_has(X86_FEATURE_MSR_SPEC_CTRL)) {
+ 		rdmsrl(MSR_IA32_SPEC_CTRL, x86_spec_ctrl_base);
++		/*
++		 * Clear the non reserved bits from x86_spec_ctrl_base
++		 * to fix kexec. Otherwise for example SSBD could be
++		 * left enabled despite booting with
++		 * spec_store_bypass_disable=off because SSBD would be
++		 * erroneously mistaken as a reserved bit set by the
++		 * BIOS when in fact it was set by a previous kernel
++		 * booted with spec_store_bypass_disable=on. Careful
++		 * however not to write SPEC_CTRL unnecessarily to
++		 * keep the virt MSR intercept enabled as long as
++		 * possible.
++		 */
++		if (x86_spec_ctrl_base & SPEC_CTRL_ALL) {
++			/* all known bits must not be set at boot, clear it */
++			x86_spec_ctrl_base &= ~SPEC_CTRL_ALL;
++			wrmsrl(MSR_IA32_SPEC_CTRL, x86_spec_ctrl_base);
++		}
++	}
+ 
+ 	/* Allow STIBP in MSR_SPEC_CTRL if supported */
+ 	if (boot_cpu_has(X86_FEATURE_STIBP))

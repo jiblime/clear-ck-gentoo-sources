@@ -1,0 +1,60 @@
+https://lkml.org/lkml/2019/9/20/947
+
+KVM: monolithic: x86: adjust the section prefixes
+https://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git/commit/?h=kvm-mono1&id=ba97a79237f1ccfbb94279edbb08ea28a06d03e5
+
+Adjusts the section prefixes of some KVM common code function because
+with the monolithic methods the section checker can now do a more
+accurate analysis at build time and this allows to build without
+CONFIG_SECTION_MISMATCH_WARN_ONLY=n.
+
+---
+
+diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
+index 3041abbd643b..5a48beb58083 100644
+--- a/arch/x86/kvm/svm.c
++++ b/arch/x86/kvm/svm.c
+@@ -1407,7 +1407,7 @@ err:
+ 	return r;
+ }
+ 
+-static __exit void svm_hardware_unsetup(void)
++static void svm_hardware_unsetup(void)
+ {
+ 	int cpu;
+ 
+diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
+index 9fc3969f6443..09e6a477e06f 100644
+--- a/arch/x86/kvm/vmx/vmx.c
++++ b/arch/x86/kvm/vmx/vmx.c
+@@ -7642,7 +7642,7 @@ static __init int hardware_setup(void)
+ 	return r;
+ }
+ 
+-static __exit void hardware_unsetup(void)
++static void hardware_unsetup(void)
+ {
+ 	if (nested)
+ 		nested_vmx_hardware_unsetup();
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index dfd641243568..c04894b61384 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -9206,7 +9206,7 @@ void kvm_arch_hardware_disable(void)
+ 	drop_user_return_notifiers();
+ }
+ 
+-int kvm_arch_hardware_setup(void)
++__init int kvm_arch_hardware_setup(void)
+ {
+ 	int r;
+ 
+@@ -9237,7 +9237,7 @@ void kvm_arch_hardware_unsetup(void)
+ 	kvm_x86_ops->hardware_unsetup();
+ }
+ 
+-int kvm_arch_check_processor_compat(void)
++__init int kvm_arch_check_processor_compat(void)
+ {
+ 	return kvm_x86_ops->check_processor_compatibility();
+ }

@@ -1,0 +1,33 @@
+https://lkml.org/lkml/2019/9/20/947
+
+KVM: monolithic: adjust the section prefixes in the KVM common code
+https://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git/commit/?h=kvm-mono1&id=b3e5a095e28a62d970e50850c8718a947b4f0ea8
+
+Adjusts the section prefixes of some KVM common code function because
+with the monolithic methods the section checker can now do a more
+accurate analysis at build time and this allows to build without
+CONFIG_SECTION_MISMATCH_WARN_ONLY=n.
+
+---
+
+diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
+index e6de3159e682..9aa448ea688f 100644
+--- a/virt/kvm/kvm_main.c
++++ b/virt/kvm/kvm_main.c
+@@ -4235,13 +4235,13 @@ static void kvm_sched_out(struct preempt_notifier *pn,
+ 	kvm_arch_vcpu_put(vcpu);
+ }
+ 
+-static void check_processor_compat(void *rtn)
++static __init void check_processor_compat(void *rtn)
+ {
+ 	*(int *)rtn = kvm_arch_check_processor_compat();
+ }
+ 
+-int kvm_init(void *opaque, unsigned vcpu_size, unsigned vcpu_align,
+-		  struct module *module)
++__init int kvm_init(void *opaque, unsigned vcpu_size, unsigned vcpu_align,
++		    struct module *module)
+ {
+ 	int r;
+ 	int cpu;

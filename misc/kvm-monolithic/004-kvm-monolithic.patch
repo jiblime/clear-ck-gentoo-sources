@@ -1,0 +1,49 @@
+https://lkml.org/lkml/2019/9/20/947
+
+KVM: monolithic: x86: enable the kvm_x86_ops external functions
+https://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git/commit/?h=kvm-mono1&id=df2203ca843bd5a7d83b81d3623b036887f96a45
+
+Plug in the new external functions and their extern declarations in
+the respective kernel modules (kvm-intel and kvm-amd).
+
+---
+
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index a3a3ec73fa2f..99b30affb8ad 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -1002,6 +1002,8 @@ struct kvm_lapic_irq {
+ 	bool msi_redir_hint;
+ };
+ 
++#include <asm/kvm_ops.h>
++
+ struct kvm_x86_ops {
+ 	int (*cpu_has_kvm_support)(void);          /* __init */
+ 	int (*disabled_by_bios)(void);             /* __init */
+diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
+index 04fe21849b6e..3041abbd643b 100644
+--- a/arch/x86/kvm/svm.c
++++ b/arch/x86/kvm/svm.c
+@@ -7179,6 +7179,8 @@ static bool svm_apic_init_signal_blocked(struct kvm_vcpu *vcpu)
+ 		   (svm->vmcb->control.intercept & (1ULL << INTERCEPT_INIT));
+ }
+ 
++#include "svm_ops.c"
++
+ static struct kvm_x86_ops svm_x86_ops __ro_after_init = {
+ 	.cpu_has_kvm_support = has_svm,
+ 	.disabled_by_bios = is_disabled,
+diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
+index 4a99be1fae4e..9fc3969f6443 100644
+--- a/arch/x86/kvm/vmx/vmx.c
++++ b/arch/x86/kvm/vmx/vmx.c
+@@ -7650,6 +7650,8 @@ static __exit void hardware_unsetup(void)
+ 	free_kvm_area();
+ }
+ 
++#include "vmx_ops.c"
++
+ static struct kvm_x86_ops vmx_x86_ops __ro_after_init = {
+ 	.cpu_has_kvm_support = cpu_has_kvm_support,
+ 	.disabled_by_bios = vmx_disabled_by_bios,

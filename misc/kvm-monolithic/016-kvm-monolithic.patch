@@ -1,0 +1,33 @@
+https://lkml.org/lkml/2019/9/20/947
+
+x86: retpolines: eliminate retpoline from msr event handlers
+https://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git/commit/?h=kvm-mono1&id=9776ade1a1cf804291562a4f3eb8e6b904bb13ff
+
+It's enough to check the value and issue the direct call.
+
+---
+
+diff --git a/arch/x86/events/intel/core.c b/arch/x86/events/intel/core.c
+index 27ee47a7be66..65b383d5e062 100644
+--- a/arch/x86/events/intel/core.c
++++ b/arch/x86/events/intel/core.c
+@@ -3323,8 +3323,19 @@ static int intel_pmu_hw_config(struct perf_event *event)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_RETPOLINE
++static struct perf_guest_switch_msr *core_guest_get_msrs(int *nr);
++static struct perf_guest_switch_msr *intel_guest_get_msrs(int *nr);
++#endif
++
+ struct perf_guest_switch_msr *perf_guest_get_msrs(int *nr)
+ {
++#ifdef CONFIG_RETPOLINE
++	if (x86_pmu.guest_get_msrs == intel_guest_get_msrs)
++		return intel_guest_get_msrs(nr);
++	else if (x86_pmu.guest_get_msrs == core_guest_get_msrs)
++		return core_guest_get_msrs(nr);
++#endif
+ 	if (x86_pmu.guest_get_msrs)
+ 		return x86_pmu.guest_get_msrs(nr);
+ 	*nr = 0;

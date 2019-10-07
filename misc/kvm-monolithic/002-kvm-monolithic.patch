@@ -1,0 +1,27 @@
+https://lkml.org/lkml/2019/9/20/947
+
+KVM: monolithic: x86: handle the request_immediate_exit variation
+https://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git/commit/?h=kvm-mono1&id=b68d97bf9c8eda15a2dd1af85d3b585a1f35cab7
+
+request_immediate_exit is one of those few cases where the pointer to
+function of the method isn't fixed at build time and it requires
+special handling because hardware_setup() may override it at runtime.
+
+---
+
+diff --git a/arch/x86/kvm/vmx/vmx_ops.c b/arch/x86/kvm/vmx/vmx_ops.c
+index cdcad73935d9..25d441432901 100644
+--- a/arch/x86/kvm/vmx/vmx_ops.c
++++ b/arch/x86/kvm/vmx/vmx_ops.c
+@@ -498,7 +498,10 @@ int kvm_x86_ops_check_nested_events(struct kvm_vcpu *vcpu, bool external_intr)
+ 
+ void kvm_x86_ops_request_immediate_exit(struct kvm_vcpu *vcpu)
+ {
+-	vmx_request_immediate_exit(vcpu);
++	if (likely(enable_preemption_timer))
++		vmx_request_immediate_exit(vcpu);
++	else
++		__kvm_request_immediate_exit(vcpu);
+ }
+ 
+ void kvm_x86_ops_sched_in(struct kvm_vcpu *kvm, int cpu)
