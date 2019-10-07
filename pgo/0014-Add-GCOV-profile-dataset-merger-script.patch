@@ -1,0 +1,65 @@
+From 738003fa1069669638836bafd57cd14f6d9817db Mon Sep 17 00:00:00 2001
+From: Jarmo Tiitto <jarmo.tiitto@gmail.com>
+Date: Thu, 3 May 2018 19:40:00 +0300
+Subject: [PATCH 14/21] Add GCOV profile dataset merger script.
+
+---
+ mergegcov.sh | 45 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 45 insertions(+)
+ create mode 100755 mergegcov.sh
+
+diff --git a/mergegcov.sh b/mergegcov.sh
+new file mode 100755
+index 000000000000..3203914e832f
+--- /dev/null
++++ b/mergegcov.sh
+@@ -0,0 +1,45 @@
++#!/bin/bash
++
++# Batch Merge multiple GCOV profile data sets
++# all profileXX.tar.gz are extracted to /tmp/kernelPGOdumpXX dirs.
++# Counters are then accumulated into /tmp/kernelPGOdump dir
++KGCCVER=/opt/kgcc-7.2/bin
++
++NUM=1
++for gcdapkg in $@; do
++	mkdir -p /tmp/kernelPGOdump${NUM}
++	tar xzf ${gcdapkg} -C /tmp/kernelPGOdump${NUM}
++    if [[ ! -f /tmp/kernelPGOdump${NUM}/sys/kernel/debug/gcov/tmp/kernelPGO/mm/mmap.gcda  ]]; then
++        echo 'No Kernel profiling data available. Stop.'
++        exit 1
++    fi
++    echo "Postprocesing GCOV data set ${NUM} with calcsum.."
++    find /tmp/kernelPGOdump${NUM} -name '*.gcda' > list.txt
++    ./calcsum list.txt >/dev/null 2>&1
++    rm -f list.txt
++    
++    echo "Postprocesing GCOV data set ${NUM} with kgcov-tool.."
++    $KGCCVER/kgcov-tool rewrite -s 1.0 -o /tmp/kernelPGOdump${NUM} /tmp/kernelPGOdump${NUM}
++    (( NUM += 1 ))
++done
++
++# rename first data set as final data set dir
++mv /tmp/kernelPGOdump1 /tmp/kernelPGOdump
++
++MC=2
++while [[ $MC -lt $NUM ]]; do
++    # Merge rest into first data set.
++    echo "Merging GCOV data set ${MC}.."
++    $KGCCVER/kgcov-tool merge -w 1.0,1.0 -o /tmp/kernelPGOdump /tmp/kernelPGOdump /tmp/kernelPGOdump${MC}
++    (( MC += 1 ))
++done
++
++if [[ ! -f /tmp/kernelPGOdump/sys/kernel/debug/gcov/tmp/kernelPGO/mm/mmap.gcda  ]]; then
++	echo 'Profile Data Merge failed..'
++	exit 1
++fi
++echo 'Discaring arch/x86/ profile data...'
++#rm -rf /tmp/kernelPGOdump/sys/kernel/debug/gcov/tmp/kernelPGO/arch/x86
++echo 'Adjusting profile data file names..'
++find /tmp/kernelPGOdump/ -name '*.gcda' -print0 | xargs -0 -n1 -P0 ./rename.sh
++    
+\ No newline at end of file
+-- 
+2.19.2
+

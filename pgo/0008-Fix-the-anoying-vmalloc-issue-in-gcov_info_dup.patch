@@ -1,0 +1,444 @@
+From c303a0dda0a0cbd5b09ca1d697efd135ccaa5626 Mon Sep 17 00:00:00 2001
+From: Jarmo Tiitto <jarmo.tiitto@gmail.com>
+Date: Wed, 31 May 2017 10:34:08 +0300
+Subject: [PATCH 08/21] Fix the anoying vmalloc issue in gcov_info_dup()
+ Implemented try-locked version of synchronized gcov profiling machinery. This
+ commit together with -fprofile-update=atomic make the produced gcda data
+ stable. GCC is able to consume most of the profile data with very good
+ results. GCC 7.1+ is *required* for GCOV/PGO kernel build to work correctly.
+
+---
+ Makefile              |  20 +++++++-
+ kernel/gcov/base.c    | 106 ++++++++++++++++++++++++++++++------------
+ kernel/gcov/gcc_4_9.c |  57 ++++++++++++++---------
+ kernel/gcov/gcov.h    |  44 ++++++------------
+ 4 files changed, 144 insertions(+), 83 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 9800f81aba97..c4b8e859c6f3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -398,7 +398,13 @@ LDFLAGS_MODULE  =
+ CFLAGS_KERNEL	=
+ AFLAGS_KERNEL	=
+ LDFLAGS_vmlinux =
+-CFLAGS_GCOV	= -fprofile-generate -fprofile-update=atomic $(call cc-disable-warning,maybe-uninitialized,)
++CFLAGS_GCOV	= -fprofile-generate=/tmp/kernelPGO -fprofile-update=atomic \
++		-fprofile-dir=/tmp/kernelPGO -fprofile-values \
++		-finline-functions -fprofile-reorder-functions \
++		-freorder-blocks-and-partition -fipa-profile -fvpt \
++		-fipa-cp -fipa-cp-clone -fipa-pta -fpeel-loops \
++		-ftree-partial-pre -fno-tree-loop-im
++
+ 
+ # Use USERINCLUDE when you must reference the UAPI directories only.
+ USERINCLUDE    := \
+@@ -685,6 +691,18 @@ KBUILD_CFLAGS   += -O2
+ endif
+ endif
+ 
++# Enable GCC PGO optimizations if madly requested.
++# PGO can easily break the kernel and you have been warned.
++ifdef CONFIG_GCOV_PGO_ENABLE
++KBUILD_CFLAGS	+= -finline-functions -fprofile-reorder-functions \
++		   -freorder-blocks-and-partition -fprofile-values \
++		   -fprofile-use=/tmp/kernelPGO -fprofile-correction \
++		   -fprofile-dir=/tmp/kernelPGO -fipa-profile -fvpt \
++		   -Wcoverage-mismatch -Wno-error=coverage-mismatch \
++		   -fipa-cp -fipa-cp-clone -fipa-pta -fpeel-loops \
++		   -ftree-partial-pre -fno-tree-loop-im
++endif
++
+ KBUILD_CFLAGS += $(call cc-ifversion, -lt, 0409, \
+ 			$(call cc-disable-warning,maybe-uninitialized,))
+ 
+diff --git a/kernel/gcov/base.c b/kernel/gcov/base.c
+index 2d518af464a1..9c5761081843 100644
+--- a/kernel/gcov/base.c
++++ b/kernel/gcov/base.c
+@@ -99,20 +99,44 @@ void __gcov_merge_time_profile(gcov_type *counters, unsigned int n_counters)
+ }
+ EXPORT_SYMBOL(__gcov_merge_time_profile);
+ 
++/*
++ * To keep GCOV machinery state consistent
++ * use simple atomic var as try-lock.
++ * Profile counter update funcs below simply ignore
++ * the update attempt if they fail acquire the lock.
++ * Failing to get the try-lock should not be a problem
++ * because over time the attempt is retried.
++ */
++static atomic_t __gcov_lock_mtx = { 0 };
++
++
++static inline int __gcov_try_lock(void)
++{
++	return atomic_cmpxchg(&__gcov_lock_mtx, 0, 1) == 0;
++}
++
++static inline void __gcov_unlock(void)
++{
++	atomic_set(&__gcov_lock_mtx, 0);
++}
++
+ static inline void __gcov_one_value_profiler_body(gcov_type *counters,
+ 						  gcov_arg value)
+ {
+-	gcov_arg val = GCOV_COUNTER_READ(counters+1);
+-	gcov_arg tst = GCOV_COUNTER_READ(counters);
+-	if( tst == value) {
+-		GCOV_COUNTER_INC(counters+1);
+-	} else if (val == 0) {
+-		if(GCOV_COUNTER_CMPXCHG(counters+1, val, 1) == val)
+-			GCOV_COUNTER_CMPXCHG(counters, tst, value);
+-	} else {
+-		GCOV_COUNTER_DEC(counters+1);
++	if(__gcov_try_lock()) {
++		gcov_arg val = GCOV_COUNTER_READ(counters+1);
++		gcov_arg tst = GCOV_COUNTER_READ(counters);
++		if( tst == value) {
++			GCOV_COUNTER_INC(counters+1);
++		} else if (val == 0) {
++			GCOV_COUNTER_SET(counters+1, 1);
++			GCOV_COUNTER_SET(counters, value);
++		} else {
++			GCOV_COUNTER_DEC(counters+1);
++		}
++		GCOV_COUNTER_INC(counters+2);
++		__gcov_unlock();
+ 	}
+-	GCOV_COUNTER_INC(counters+2);
+ }
+ 
+ void __gcov_indirect_call_profiler(gcov_type *counter, gcov_arg value,
+@@ -123,9 +147,9 @@ void __gcov_indirect_call_profiler(gcov_type *counter, gcov_arg value,
+ }
+ EXPORT_SYMBOL(__gcov_indirect_call_profiler);
+ 
+-void *__gcov_indirect_call_callee;
++void *__gcov_indirect_call_callee = NULL;
+ EXPORT_SYMBOL(__gcov_indirect_call_callee);
+-gcov_type *__gcov_indirect_call_counters;
++gcov_type *__gcov_indirect_call_counters = NULL;
+ EXPORT_SYMBOL(__gcov_indirect_call_counters);
+ 
+ void __gcov_indirect_call_profiler_v2(gcov_arg value, void *cur_func)
+@@ -137,14 +161,19 @@ void __gcov_indirect_call_profiler_v2(gcov_arg value, void *cur_func)
+ EXPORT_SYMBOL(__gcov_indirect_call_profiler_v2);
+ 
+ static gcov_type function_counter = { 0 };
++gcov_arg __gcov_time_profiler_counter = { 0 };
++EXPORT_SYMBOL(__gcov_time_profiler_counter);
+ 
+ void __gcov_time_profiler(gcov_type *counters)
+ {
+-	gcov_arg fcnt = GCOV_COUNTER_READ(&function_counter);
+-	gcov_arg tst = GCOV_COUNTER_READ(counters);
+-	if(!tst) {
+-		if(GCOV_COUNTER_CMPXCHG(counters, tst, fcnt + 1) == tst)
+-			GCOV_COUNTER_INC(&function_counter);
++	if(__gcov_try_lock()) {
++		gcov_arg fcnt = GCOV_COUNTER_READ(&function_counter);
++		gcov_arg tst = GCOV_COUNTER_READ(counters);
++		if(!tst) {
++			if(GCOV_COUNTER_CMPXCHG(counters, tst, fcnt + 1) == tst)
++				GCOV_COUNTER_INC(&function_counter);
++		}
++		__gcov_unlock();
+ 	}
+ }
+ EXPORT_SYMBOL(__gcov_time_profiler);
+@@ -158,7 +187,10 @@ EXPORT_SYMBOL(__gcov_time_profiler_atomic);
+ 
+ void __gcov_ior_profiler(gcov_type *counters, gcov_arg value)
+ {
+-	GCOV_COUNTER_BITOR(counters, value);
++	if(__gcov_try_lock()) {
++		GCOV_COUNTER_BITOR(counters, value);
++		__gcov_unlock();
++	}
+ }
+ EXPORT_SYMBOL(__gcov_ior_profiler);
+ 
+@@ -171,8 +203,11 @@ EXPORT_SYMBOL(__gcov_ior_profiler_atomic);
+ 
+ void __gcov_average_profiler(gcov_type *counters, gcov_arg value)
+ {
+-	GCOV_COUNTER_ADD(counters, value);
+-	GCOV_COUNTER_INC(counters);
++	if(__gcov_try_lock()) {
++		GCOV_COUNTER_ADD(counters, value);
++		GCOV_COUNTER_INC(counters+1);
++		__gcov_unlock();
++	}
+ }
+ EXPORT_SYMBOL(__gcov_average_profiler);
+ 
+@@ -200,12 +235,15 @@ void __gcov_interval_profiler(gcov_type *counters, gcov_arg value,
+ 			      int start, unsigned steps)
+ {
+ 	long long delta = value - start;
+-	if (delta < 0)
+-		GCOV_COUNTER_INC(counters + steps + 1);
+-	else if (delta >= steps)
+-		GCOV_COUNTER_INC(counters + steps);
+-	else
+-		GCOV_COUNTER_INC(counters + delta);
++	if(__gcov_try_lock()) {
++		if (delta < 0)
++			GCOV_COUNTER_INC(counters + steps + 1);
++		else if (delta >= steps)
++			GCOV_COUNTER_INC(counters + steps);
++		else
++			GCOV_COUNTER_INC(counters + delta);
++		__gcov_unlock();
++	}
+ }
+ EXPORT_SYMBOL(__gcov_interval_profiler);
+ 
+@@ -219,10 +257,13 @@ EXPORT_SYMBOL(__gcov_interval_profiler_atomic);
+ 
+ void __gcov_pow2_profiler(gcov_type *counters, gcov_arg value)
+ {
+-	if (value & (value - 1))
+-		GCOV_COUNTER_INC(counters);
+-	else
+-		GCOV_COUNTER_INC(counters+1);
++	if(__gcov_try_lock()) {
++		if (value & (value - 1))
++			GCOV_COUNTER_INC(counters);
++		else
++			GCOV_COUNTER_INC(counters+1);
++		__gcov_unlock();
++	}
+ }
+ EXPORT_SYMBOL(__gcov_pow2_profiler);
+ 
+@@ -233,6 +274,7 @@ void __gcov_pow2_profiler_atomic(gcov_type *counters, gcov_arg value)
+ }
+ EXPORT_SYMBOL(__gcov_pow2_profiler_atomic);
+ 
++/* not sure if gcc uses this profiler at all */
+ static inline void __gcov_topn_value_profiler_body(gcov_type * counters, gcov_arg value)
+ {
+ 	unsigned int i, j, found = 0, have_zero_count = 0;
+@@ -320,8 +362,10 @@ EXPORT_SYMBOL(__gcov_indirect_call_topn_callee);
+ void __gcov_indirect_call_topn_profiler(gcov_arg value, void* cur_func)
+ {
+ 	void *callee_func = __gcov_indirect_call_topn_callee;
+-	if (cur_func == callee_func)
++	if (cur_func == callee_func && __gcov_try_lock()) {
+ 		__gcov_topn_value_profiler_body (__gcov_indirect_call_topn_counters, value);
++		__gcov_unlock();
++	}
+ }
+ EXPORT_SYMBOL(__gcov_indirect_call_topn_profiler);
+ 
+diff --git a/kernel/gcov/gcc_4_9.c b/kernel/gcov/gcc_4_9.c
+index 5900cb05df99..4b824e01f16c 100644
+--- a/kernel/gcov/gcc_4_9.c
++++ b/kernel/gcov/gcc_4_9.c
+@@ -1,11 +1,12 @@
+ /*
+  *  This code provides functions to handle gcc's profiling data format
+- *  introduced with gcc 4.9.
++ *  introduced with gcc 4.9+
+  *
+  *  This file is based heavily on gcc_4_7.c file.
+  *
+  *  For a better understanding, refer to gcc source:
+  *  gcc/gcov-io.h
++ *  gcc/tree-profile.c
+  *  libgcc/libgcov*
+  *
+  *  Uses gcc-internal data definitions.
+@@ -19,9 +20,9 @@
+ #include "gcov.h"
+ 
+ #if __GNUC__ >= 6
+-#define GCOV_COUNTERS			10
++#define GCOV_COUNTERS			9
+ #elif __GNUC__ == 5 && __GNUC_MINOR__ >= 1
+-#define GCOV_COUNTERS			10
++#define GCOV_COUNTERS			9
+ #elif __GNUC__ == 4 && __GNUC_MINOR__ >= 9
+ #define GCOV_COUNTERS			9
+ #else
+@@ -67,7 +68,7 @@ struct gcov_fn_info {
+ 	unsigned int ident;
+ 	unsigned int lineno_checksum;
+ 	unsigned int cfg_checksum;
+-	struct gcov_ctr_info ctrs[0];
++	struct gcov_ctr_info ctrs[1];
+ };
+ 
+ /**
+@@ -378,13 +379,22 @@ static void gcov_merge_icall_topn(struct gcov_ctr_info *dst,
+ 		}
+ 	}
+ }
+-
++/* as of gcc 7.1 has following counters defined:
++DEF_GCOV_COUNTER(GCOV_COUNTER_ARCS, "arcs", _add)
++DEF_GCOV_COUNTER(GCOV_COUNTER_V_INTERVAL, "interval", _add)
++DEF_GCOV_COUNTER(GCOV_COUNTER_V_POW2, "pow2", _add)
++DEF_GCOV_COUNTER(GCOV_COUNTER_V_SINGLE, "single", _single)
++DEF_GCOV_COUNTER(GCOV_COUNTER_V_INDIR, "indirect_call", _single)
++DEF_GCOV_COUNTER(GCOV_COUNTER_AVERAGE, "average", _add)
++DEF_GCOV_COUNTER(GCOV_COUNTER_IOR, "ior", _ior)
++DEF_GCOV_COUNTER(GCOV_TIME_PROFILER, "time_profiler", _time_profile)
++DEF_GCOV_COUNTER(GCOV_COUNTER_ICALL_TOPNV, "indirect_call_topn", _icall_topn)
++*/
+ static const gcov_merge_fn gcov_merge[GCOV_COUNTERS] = {
+ 	&gcov_merge_add,
+ 	&gcov_merge_add,
+ 	&gcov_merge_add,
+ 	&gcov_merge_single,
+-	&gcov_merge_delta,
+ 	&gcov_merge_single,
+ 	&gcov_merge_add,
+ 	&gcov_merge_ior,
+@@ -438,7 +448,7 @@ struct gcov_info *gcov_info_dup(struct gcov_info *info)
+ 	unsigned int ct_idx; /* counter type idx */
+ 	size_t fi_size; /* function info size */
+ 	size_t cv_size; /* counter values size */
+-
++	size_t cv_num;
+ 	dup = kmemdup(info, sizeof(*dup), GFP_KERNEL);
+ 	if (!dup)
+ 		return NULL;
+@@ -471,17 +481,21 @@ struct gcov_info *gcov_info_dup(struct gcov_info *info)
+ 		dci_ptr = dup->functions[fi_idx]->ctrs;
+ 
+ 		for (ct_idx = 0; ct_idx < active; ct_idx++) {
+-
+-			cv_size = sizeof(gcov_type) * sci_ptr->num;
+-
+-			dci_ptr->values = vmalloc(cv_size);
+-
+-			if (cv_size && !dci_ptr->values)
+-				goto err_free;
+-
+-			dci_ptr->num = sci_ptr->num;
+-			memcpy(dci_ptr->values, sci_ptr->values, cv_size);
+-
++			cv_num = sci_ptr->num;
++			cv_size = sizeof(gcov_type) * cv_num;
++			/* skip zero size requests - vmalloc doesn't like them */
++			if(cv_num) {
++				dci_ptr->values = vmalloc(cv_size);
++
++				if (cv_num && !dci_ptr->values)
++					goto err_free;
++
++				memcpy(dci_ptr->values, sci_ptr->values, cv_size);
++				dci_ptr->num = cv_num;
++			} else {
++				dci_ptr->values = NULL;
++				dci_ptr->num = 0;
++			}
+ 			sci_ptr++;
+ 			dci_ptr++;
+ 		}
+@@ -489,7 +503,7 @@ struct gcov_info *gcov_info_dup(struct gcov_info *info)
+ 
+ 	return dup;
+ err_free:
+-	pr_warn("Failed to reserve enough memory for gcov!");
++	pr_warn("Failed to reserve %ld values for gcov!", cv_num);
+ 	gcov_info_free(dup);
+ 	return NULL;
+ }
+@@ -611,6 +625,7 @@ static size_t convert_to_gcda(char *buffer, struct gcov_info *info)
+ 
+ 	/* File header. */
+ 	pos += store_gcov_u32(buffer, pos, GCOV_DATA_MAGIC);
++	/* fixme: info->version has bogus old version value */
+ 	pos += store_gcov_u32(buffer, pos, info->version);
+ 	pos += store_gcov_u32(buffer, pos, info->stamp);
+ 
+@@ -656,8 +671,6 @@ static size_t convert_to_gcda(char *buffer, struct gcov_info *info)
+ struct gcov_iterator *gcov_iter_new(struct gcov_info *info)
+ {
+ 	struct gcov_iterator *iter;
+-	/* print notice that we are really doing something. */
+-	pr_info("Emiting GCDA for %s", info ? info->filename : "");
+ 	iter = kzalloc(sizeof(struct gcov_iterator), GFP_KERNEL);
+ 	if (!iter)
+ 		goto err_free;
+@@ -665,6 +678,8 @@ struct gcov_iterator *gcov_iter_new(struct gcov_info *info)
+ 	iter->info = info;
+ 	/* Dry-run to get the actual buffer size. */
+ 	iter->size = convert_to_gcda(NULL, info);
++	/* print notice that we are really doing something. */
++	pr_info("Emiting %ldk GCDA for %s", iter->size / 1024, info ? info->filename : "");
+ 	iter->buffer = vmalloc(iter->size);
+ 	if (!iter->buffer)
+ 		goto err_free;
+diff --git a/kernel/gcov/gcov.h b/kernel/gcov/gcov.h
+index a642595788fd..37eca46fbd07 100644
+--- a/kernel/gcov/gcov.h
++++ b/kernel/gcov/gcov.h
+@@ -23,7 +23,7 @@
+  * gcc and need to be kept as close to the original definition as possible to
+  * remain compatible.
+  */
+-#define GCOV_DATA_MAGIC		((unsigned int) 0x67636461)
++#define GCOV_DATA_MAGIC		((unsigned int) 0x67636461) /* "GCDA" */
+ #define GCOV_TAG_FUNCTION	((unsigned int) 0x01000000)
+ #define GCOV_TAG_COUNTER_BASE	((unsigned int) 0x01a10000)
+ #define GCOV_TAG_FOR_COUNTER(count)					\
+@@ -39,37 +39,21 @@
+  * To make PGO optimized kernel stable, kgcov profiling code
+  * must be thread-safe. This means using atomic operations
+  * to when operating on the counters.
++ * These macros wrap all operations done on the profile counters
++ * allowing to inject code.
+  */
+-#if BITS_PER_LONG >= 64
+-typedef atomic64_t gcov_type;
++typedef long long gcov_type;
+ typedef long long gcov_arg;
+-#define GCOV_COUNTER_READ(X) atomic64_read((X))
+-#define GCOV_COUNTER_SET(X, A) atomic64_set((X), (A))
+-#define GCOV_COUNTER_INC(X) atomic64_inc((X))
+-#define GCOV_COUNTER_DEC(X) atomic64_dec((X))
+-#define GCOV_COUNTER_ADD(X, A) atomic64_add((A), (X))
+-#define GCOV_COUNTER_SUB(X, A) atomic64_sub((A), (X))
+-#define GCOV_COUNTER_FETCH_ADD(X, A) atomic64_fetch_add((A), (X))
+-#define GCOV_COUNTER_FETCH_SUB(X, A) atomic64_fetch_sub((A), (X))
+-#define GCOV_COUNTER_BITOR(X, A) atomic64_or((A), (X))
+-#define GCOV_COUNTER_CMPXCHG(X, B, A) atomic64_cmpxchg((X), (B), (A))
+-#else
+-typedef atomic_t gcov_type;
+-typedef long gcov_arg;
+-#define GCOV_COUNTER_READ(X) ((gcov_type) atomic_read((atomic_t*)&(X)))
+-#define GCOV_COUNTER_SET(X, A) atomic_set((atomic_t*)&(X), (A))
+-#define GCOV_COUNTER_INC(X) atomic_inc((atomic_t*)&(X))
+-#define GCOV_COUNTER_DEC(X) atomic_dec((atomic_t*)&(X))
+-#define GCOV_COUNTER_ADD(X, A) atomic_add((A), (atomic_t*)&(X))
+-#define GCOV_COUNTER_SUB(X, A) atomic_sub((A), (atomic_t*)&(X))
+-#define GCOV_COUNTER_FETCH_ADD(X, A) atomic_fetch_add((A), (atomic_t*)&(X))
+-#define GCOV_COUNTER_FETCH_SUB(X, A) atomic_fetch_sub((A), (atomic_t*)&(X))
+-#define GCOV_COUNTER_BITOR(X, A) atomic_or((A), (atomic_t*)&(X))
+-#define GCOV_COUNTER_CMPXCHG(X, B, A) atomic64_cmpxchg((X), (B), (A))
+-
+-#endif
+-
+-
++#define GCOV_COUNTER_READ(X) (*(X))
++#define GCOV_COUNTER_SET(X, A) (*(X) = (A))
++#define GCOV_COUNTER_INC(X) ((*(X))++)
++#define GCOV_COUNTER_DEC(X) ((*(X))--)
++#define GCOV_COUNTER_ADD(X, A) (*(X) += (A))
++#define GCOV_COUNTER_SUB(X, A) (*(X) -= (A))
++#define GCOV_COUNTER_FETCH_ADD(X, A) (*(X) += (A))
++#define GCOV_COUNTER_FETCH_SUB(X, A) (*(X) -= (A))
++#define GCOV_COUNTER_BITOR(X, A) (*(X) |= (A))
++#define GCOV_COUNTER_CMPXCHG(X, B, A) (*(X) == (B) ? *(X) = (A) : *(X))
+ 
+ /* Opaque gcov_info. The gcov structures can change as for example in gcc 4.7 so
+  * we cannot use full definition here and they need to be placed in gcc specific
+-- 
+2.19.2
+

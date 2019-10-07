@@ -1,48 +1,53 @@
-# ck patchset
-# 0001-MultiQueue-Skiplist-Scheduler-version-0.193.patch
-# 0002-Fix-Werror-build-failure-in-tools.patch
-# 0003-Make-preemptible-kernel-default.patch
-# 0004-Expose-vmsplit-for-our-poor-32-bit-users.patch
-# 0005-Create-highres-timeout-variants-of-schedule_timeout-.patch
-# 0006-Special-case-calls-of-schedule_timeout-1-to-use-the-.patch
-# 0007-Convert-msleep-to-use-hrtimers-when-active.patch
-# 0008-Replace-all-schedule-timeout-1-with-schedule_min_hrt.patch
-# 0009-Replace-all-calls-to-schedule_timeout_interruptible-.patch
-# 0010-Replace-all-calls-to-schedule_timeout_uninterruptibl.patch
-# 0011-Don-t-use-hrtimer-overlay-when-pm_freezing-since-som.patch
-# 0012-Make-hrtimer-granularity-and-minimum-hrtimeout-confi.patch
-# 0013-Make-threaded-IRQs-optionally-the-default-which-can-.patch
-# 0014-Reinstate-default-Hz-of-100-in-combination-with-MuQS.patch
-# 0015-Swap-sucks.patch
-# 0016-Make-nohz_full-not-be-picked-up-as-a-default-config-.patch
-ck-193.patch
+# Credits to /u/JATmatic on reddit.com
+# and http://coolypf.com/kpgo
 
-# Incremental patches go here
-5.2-5.2.18.patch
+# https://reddit.com/r/kernel/comments/a2og7u/the_process_of_building_the_kernel_with_gcc/
 
-# Clear Linux
-# Use ./clear-patch-selector.sh to generate this patch.
-# It should be compatiable with AMD/Intel as well as other distros.
-generated/clear.patch
+# Combined ck patchset | ck-180 for 4.19
+ck.patch
 
+# This patch needs to be done separately (?).
+# It's a part of the 4.19.xx patchset.
+misc/sched_smt.patch
 
-# graysky2's patch to allow GCC to optimize compilation based on processor.
-graysky2/enable_additional_cpu_optimizations_for_gcc_v9.1+_kernel_v4.13+.patch
+# Incremental patch
+misc/4.19.77.patch
 
-# Fix to enable sensor detection for newer Ryzen processors
-misc/amd-k10.patch
+# https://github.com/zen-kernel/zen-kernel/issues/132
+# Specific to 4.19.xx-ck1.
+misc/sched_smt_present.patch
 
-# Fixes breakage with "systemd-timesyncd, systemd-random-seed, haveged and everything else that has ConditionVirtualization=!container in its unit file."
-misc/fix-systemd-detect-virt.patch
+# gcov patchset
+# No need to change kernel settings since the gcov scripts will do that for you
+pgo/0003-Merged-the-GCOV-patch-from-http-coolypf.com-0001-Add.patch
+pgo/0004-Fix-crypto-jitterentropy.c-not-building-with-fprofil.patch
+pgo/0005-Provide-support-and-loads-of-misc-fixes-to-kernel-gc.patch
+pgo/0006-Adding-external-support-scripts-to-perform.patch
+pgo/0007-Applied-processGCOVMakefiles-script-to-the-kernel-so.patch
+pgo/0008-Fix-the-anoying-vmalloc-issue-in-gcov_info_dup.patch
+pgo/0009-Fixup-buildGCOVKernel-exit-status-never-worked-prope.patch
+pgo/0010-The-__gcov_time_profiler-gcov-callback-is-not-needed.patch
+pgo/0011-Improved-gcov-base.c-profile-machinery-reverted-to-u.patch
+pgo/0012-Enable-GCOV-again-on-some-specific-arch-x86-places.patch
+pgo/0013-Typo-and-GCC-version-fixups.patch
+pgo/0014-Add-GCOV-profile-dataset-merger-script.patch
+pgo/0015-Moved-kgcov-scripts-under-scripts-kgcov.patch
+pgo/0016-Testing-GCOV_PROFILE-y-effect-on-the-build.patch
+pgo/0017-Upgrade-to-kgcc-7.3.patch
+pgo/0018-Fixups.patch
+pgo/0019-Build-fixups.patch
+pgo/0020-Updated-PGO-scripts-for-gcc-8-version.patch
+pgo/0021-Updated-PGO-scripts-and-patched-calcsum-for-gcc-8-ve.patch
 
-# Gentoo specific patches.
-# 1500_XATTR_USER_PREFIX.patch
-# 1510_fs-enable-link-security-restrictions-by-default.patch
-# 2000_BT-Check-key-sizes-only-if-Secure-Simple-Pairing-enabled.patch
-# 2500_usb-storage-Disable-UAS-on-JMicron-SATA-enclosure.patch
-# 2600_enable-key-swapping-for-apple-mac.patch
-# 4567_distro-Gentoo-Kconfig.patch
-misc/gentoo-flavor-5.2.patch
+# Gentoo specific patches
+misc/gentoo-flavor-4.19.77.patch
 
-# Fixes kernel tree imcompat with gawk >=5.0
+# Awk >=5.0 fix
 misc/treewide-fix-awk-regexp-over-escaping.patch
+
+# Removed the reliance on kgcc and instead use the system's
+# gcov, gcov-tool, gcc, gcc-ar, and gcc-nm to build. 
+# This usually would invoke their respective /usr/bin/gcc* symlinks.
+# Note ~ gcov's version is matched for 9.2.0. You may need to edit
+#        gcov_version in scripts/kgcov/calcsum-4.9.cpp if there's a version mismatch.
+misc/edit-gcov-scripts.patch

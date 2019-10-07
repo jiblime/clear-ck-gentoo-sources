@@ -1,0 +1,134 @@
+From e9a4c85580241936be3a85d7a579e4e2fe69660b Mon Sep 17 00:00:00 2001
+From: Jarmo Tiitto <jarmo.tiitto@gmail.com>
+Date: Mon, 28 Aug 2017 16:02:59 +0300
+Subject: [PATCH 12/21] Enable GCOV again on some specific arch/x86 places.
+
+---
+ arch/x86/crypto/Makefile |  2 ++
+ arch/x86/lib/Makefile    |  2 ++
+ kernel/gcov/Kconfig      | 10 ++++++----
+ kernel/gcov/base.c       |  5 +++--
+ kernel/gcov/gcc_4_9.c    |  1 +
+ kernel/gcov/gcov.h       | 14 +++++++-------
+ 6 files changed, 21 insertions(+), 13 deletions(-)
+
+diff --git a/arch/x86/crypto/Makefile b/arch/x86/crypto/Makefile
+index a450ad573dcb..f5bc2a1fd77c 100644
+--- a/arch/x86/crypto/Makefile
++++ b/arch/x86/crypto/Makefile
+@@ -4,6 +4,8 @@
+ #
+ 
+ OBJECT_FILES_NON_STANDARD := y
++# Do instrument all x86 crypto stuff
++GCOV_PROFILE := y
+ 
+ avx_supported := $(call as-instr,vpxor %xmm0$(comma)%xmm0$(comma)%xmm0,yes,no)
+ avx2_supported := $(call as-instr,vpgatherdd %ymm0$(comma)(%eax$(comma)%ymm1\
+diff --git a/arch/x86/lib/Makefile b/arch/x86/lib/Makefile
+index 2d3881afb7e1..bc4a5f815ae2 100644
+--- a/arch/x86/lib/Makefile
++++ b/arch/x86/lib/Makefile
+@@ -6,6 +6,8 @@
+ # Produces uninteresting flaky coverage.
+ KCOV_INSTRUMENT_delay.o	:= n
+ GCOV_PROFILE_delay.o	:= n
++# Do instrument rest of the code
++GCOV_PROFILE := y
+ 
+ inat_tables_script = $(srctree)/arch/x86/tools/gen-insn-attr-x86.awk
+ inat_tables_maps = $(srctree)/arch/x86/lib/x86-opcode-map.txt
+diff --git a/kernel/gcov/Kconfig b/kernel/gcov/Kconfig
+index 2a803fc45f07..ac112088c69b 100644
+--- a/kernel/gcov/Kconfig
++++ b/kernel/gcov/Kconfig
+@@ -1,13 +1,14 @@
+ menu "GCOV-based kernel profiling"
+ 
+ config GCOV_PGO_ENABLE
+-	bool "Enable Profile guided optimization kernel build."
++	bool "Enable GCC Profile guided build optimizations"
+ 	default n
+ 	---help---
+ 	This option enables gcov-profile based build optimizations.
+-	Kernel must have been first instrumented and gcov-profile data
+-	must be available at /tmp/kernelPGO.
+-	This enables -fprofile-use=/tmp/kernelPGO gcc flag.
++	GCC -fprofile-use=/tmp/kernelPGO option is turned on.
++	Also certain -O3 level optimiaztions are also enabled.
++	Kernel must have been first instrumented with GCOV_PROFILE_ALL and GCDA data
++	must be available at /tmp/kernelPGO. GCC GCNO data must also be available. 
+ 	Very experimental.
+ 
+ config GCOV_KERNEL
+@@ -90,6 +91,7 @@ config GCOV_FORMAT_6_3
+ 	bool "GCC 6.3 format"
+ 	---help---
+ 	Select this option to use the format defined by GCC 6.3.
++	This version onward is comaptible with GCOV_PGO_ENABLE option.
+ 
+ endchoice
+ 
+diff --git a/kernel/gcov/base.c b/kernel/gcov/base.c
+index e21e464e2612..194bff87febf 100644
+--- a/kernel/gcov/base.c
++++ b/kernel/gcov/base.c
+@@ -100,9 +100,10 @@ void __gcov_merge_time_profile(gcov_type *counters, unsigned int n_counters)
+ EXPORT_SYMBOL(__gcov_merge_time_profile);
+ 
+ /*
+- * A try-lock must be used to keep kgcov state consistent.
++ * Inline try-lock must be used to keep kgcov state consistent.
++ * GCC will inject calls to functions below from all kernel code.
+  * We still need atomic ops for modifying the counter data,
+- * this lock protects only the RMW sequences below.
++ * this try-lock ensures proper multi-RMW ordering.
+  */
+ static atomic_t __gcov_lock_mtx = { 0 };
+ 
+diff --git a/kernel/gcov/gcc_4_9.c b/kernel/gcov/gcc_4_9.c
+index 4b824e01f16c..8ad3bb9c64d4 100644
+--- a/kernel/gcov/gcc_4_9.c
++++ b/kernel/gcov/gcc_4_9.c
+@@ -389,6 +389,7 @@ DEF_GCOV_COUNTER(GCOV_COUNTER_AVERAGE, "average", _add)
+ DEF_GCOV_COUNTER(GCOV_COUNTER_IOR, "ior", _ior)
+ DEF_GCOV_COUNTER(GCOV_TIME_PROFILER, "time_profiler", _time_profile)
+ DEF_GCOV_COUNTER(GCOV_COUNTER_ICALL_TOPNV, "indirect_call_topn", _icall_topn)
++The last one - indirect_call_topn, is not yet utilized by gcc.
+ */
+ static const gcov_merge_fn gcov_merge[GCOV_COUNTERS] = {
+ 	&gcov_merge_add,
+diff --git a/kernel/gcov/gcov.h b/kernel/gcov/gcov.h
+index 59b38e61f573..d8dd19598554 100644
+--- a/kernel/gcov/gcov.h
++++ b/kernel/gcov/gcov.h
+@@ -28,19 +28,19 @@
+ #define GCOV_TAG_COUNTER_BASE	((unsigned int) 0x01a10000)
+ #define GCOV_TAG_FOR_COUNTER(count)					\
+ 	(GCOV_TAG_COUNTER_BASE + ((unsigned int) (count) << 17))
+-	
++
+ /* The number of hottest callees to be tracked.  */
+ #define GCOV_ICALL_TOPN_VAL  2
+- 
++
+ /* The number of counter entries per icall callsite.  */
+ #define GCOV_ICALL_TOPN_NCOUNTS (1 + GCOV_ICALL_TOPN_VAL * 4)
+ 
+ /*
+- * To make PGO optimized kernel stable, kgcov profiling code
+- * must be thread-safe. This means using atomic operations
+- * to when operating on the counters.
+- * These macros wrap all operations done on the profile counters
+- * allowing to inject code.
++ * To make kgcov data stable enough for GCC FDO consumption,
++ * kgcov profiling code must be thread-safe.
++ * This means using atomic operations to when operating on the counters.
++ * These macros wrap all operations done on the raw profile counters
++ * maintained by gcc.
+  */
+ #if BITS_PER_LONG >= 64
+ typedef atomic64_t gcov_type;
+-- 
+2.19.2
+

@@ -1,0 +1,40 @@
+From 5ead57045d32f0fe271318c54b8448ad9406839d Mon Sep 17 00:00:00 2001
+From: Jarmo Tiitto <jarmo.tiitto@gmail.com>
+Date: Sun, 2 Dec 2018 17:59:56 +0200
+Subject: [PATCH 21/21] Updated PGO scripts and patched calcsum for gcc 8
+ version.
+
+---
+ scripts/kgcov/calcsum-4.9.cpp | 2 +-
+ scripts/kgcov/mergegcov.sh    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/scripts/kgcov/calcsum-4.9.cpp b/scripts/kgcov/calcsum-4.9.cpp
+index 68233e5b325c..6844289048a8 100644
+--- a/scripts/kgcov/calcsum-4.9.cpp
++++ b/scripts/kgcov/calcsum-4.9.cpp
+@@ -170,7 +170,7 @@ int write_file(const vector<char> in, const char *filename)
+ 	// or picked from the gcc error message.
+ 	// I have not yet figured out where kgcov registers the
+ 	// GCC version or how to change it automatically per build.
+-	unsigned int gcov_version = 1094136618;
++	unsigned int gcov_version = 1094201898;
+ 	fwrite(in.data(), 1, 4, fp);
+ 	fwrite(&gcov_version, 1, 4, fp);
+ 	fwrite(in.data()+8, 1, 4, fp);
+diff --git a/scripts/kgcov/mergegcov.sh b/scripts/kgcov/mergegcov.sh
+index 4e7a3e6c658c..2983e24604a0 100755
+--- a/scripts/kgcov/mergegcov.sh
++++ b/scripts/kgcov/mergegcov.sh
+@@ -7,7 +7,7 @@ KGCCVER=/opt/kgcc-8/bin
+ 
+ if [[ ! -f ./scripts/kgcov/calcsum  ]]; then
+     echo "Compiling calcsum-4.9 for post processing the profile data.."
+-    gcc gcc -O2 /scripts/kgcov/calcsum-4.9.cpp -o ./scripts/kgcov/calcsum -lstdc++
++    gcc -O2 /scripts/kgcov/calcsum-4.9.cpp -o ./scripts/kgcov/calcsum -lstdc++
+ fi
+ 
+ NUM=1
+-- 
+2.19.2
+

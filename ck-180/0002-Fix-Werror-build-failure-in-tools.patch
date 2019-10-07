@@ -1,0 +1,25 @@
+From ba77544e4687e62fe9d8ca870ceb47ea87d1cbfe Mon Sep 17 00:00:00 2001
+From: Con Kolivas <kernel@kolivas.org>
+Date: Sun, 18 Feb 2018 12:36:22 +1100
+Subject: [PATCH 02/16] Fix Werror build failure in tools.
+
+---
+ tools/objtool/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/objtool/Makefile b/tools/objtool/Makefile
+index c9d038f91af6..af41781c233a 100644
+--- a/tools/objtool/Makefile
++++ b/tools/objtool/Makefile
+@@ -31,7 +31,7 @@ INCLUDES := -I$(srctree)/tools/include \
+ 	    -I$(srctree)/tools/arch/$(HOSTARCH)/include/uapi \
+ 	    -I$(srctree)/tools/objtool/arch/$(ARCH)/include
+ WARNINGS := $(EXTRA_WARNINGS) -Wno-switch-default -Wno-switch-enum -Wno-packed
+-CFLAGS   += -Werror $(WARNINGS) $(KBUILD_HOSTCFLAGS) -g $(INCLUDES)
++CFLAGS   += $(WARNINGS) $(KBUILD_HOSTCFLAGS) -g $(INCLUDES)
+ LDFLAGS  += -lelf $(LIBSUBCMD) $(KBUILD_HOSTLDFLAGS)
+ 
+ # Allow old libelf to be used:
+-- 
+2.17.1
+

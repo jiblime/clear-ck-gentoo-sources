@@ -1,0 +1,17 @@
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1005,13 +1005,7 @@ config NR_CPUS
+ 	  to the kernel image.
+ 
+ config SCHED_SMT
+-	bool "SMT (Hyperthreading) scheduler support"
+-	depends on SMP
+-	---help---
+-	  SMT scheduler support improves the CPU scheduler's decision making
+-	  when dealing with Intel P4/Core 2 chips with HyperThreading at a
+-	  cost of slightly increased overhead in some places. If unsure say
+-	  N here.
++	  def_bool y if SMP
+ 
+ config SMT_NICE
+ 	bool "SMT (Hyperthreading) aware nice priority and policy support"

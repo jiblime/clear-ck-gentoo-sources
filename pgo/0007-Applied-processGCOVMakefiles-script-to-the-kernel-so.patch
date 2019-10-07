@@ -1,0 +1,330 @@
+From 386b894bf4e23de62a4141b4b1a918c4a78941e4 Mon Sep 17 00:00:00 2001
+From: Jarmo Tiitto <jarmo.tiitto@gmail.com>
+Date: Wed, 10 May 2017 09:34:45 +0300
+Subject: [PATCH 07/21] Applied processGCOVMakefiles script to the kernel
+ source.
+
+---
+ arch/arm64/kvm/hyp/Makefile           | 1 +
+ arch/s390/kernel/Makefile             | 4 +++-
+ arch/s390/kernel/vdso32/Makefile      | 1 +
+ arch/s390/kernel/vdso64/Makefile      | 1 +
+ arch/um/kernel/Makefile               | 1 +
+ arch/um/os-Linux/Makefile             | 1 +
+ arch/x86/boot/Makefile                | 1 +
+ arch/x86/boot/compressed/Makefile     | 1 +
+ arch/x86/entry/vdso/Makefile          | 1 +
+ arch/x86/kernel/Makefile              | 1 +
+ arch/x86/kernel/apic/Makefile         | 1 +
+ arch/x86/kernel/cpu/Makefile          | 2 ++
+ arch/x86/lib/Makefile                 | 1 +
+ arch/x86/mm/Makefile                  | 3 ++-
+ arch/x86/purgatory/Makefile           | 1 +
+ arch/x86/realmode/rm/Makefile         | 1 +
+ arch/x86/um/vdso/Makefile             | 1 +
+ drivers/firmware/efi/libstub/Makefile | 1 +
+ init/Makefile                         | 3 +++
+ kernel/Makefile                       | 4 ++++
+ lib/Makefile                          | 6 ++++++
+ mm/kasan/Makefile                     | 1 +
+ 22 files changed, 36 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/kvm/hyp/Makefile b/arch/arm64/kvm/hyp/Makefile
+index 2fabc2dc1966..315008894dc6 100644
+--- a/arch/arm64/kvm/hyp/Makefile
++++ b/arch/arm64/kvm/hyp/Makefile
+@@ -28,3 +28,4 @@ GCOV_PROFILE	:= n
+ KASAN_SANITIZE	:= n
+ UBSAN_SANITIZE	:= n
+ KCOV_INSTRUMENT	:= n
++GCOV_PROFILE	:= n
+diff --git a/arch/s390/kernel/Makefile b/arch/s390/kernel/Makefile
+index dbfd1730e631..e990a1edefd8 100644
+--- a/arch/s390/kernel/Makefile
++++ b/arch/s390/kernel/Makefile
+@@ -17,8 +17,10 @@ endif
+ GCOV_PROFILE_early.o		:= n
+ GCOV_PROFILE_early_nobss.o	:= n
+ 
++GCOV_PROFILE_als.o	:= n
+ KCOV_INSTRUMENT_early.o		:= n
+-KCOV_INSTRUMENT_early_nobss.o	:= n
++GCOV_PROFILE_early.o	:= n
++GCOV_PROFILE_sclp.o	:= n
+ 
+ UBSAN_SANITIZE_early.o		:= n
+ UBSAN_SANITIZE_early_nobss.o	:= n
+diff --git a/arch/s390/kernel/vdso32/Makefile b/arch/s390/kernel/vdso32/Makefile
+index 04dd3e2c3bd9..f47cceb151d1 100644
+--- a/arch/s390/kernel/vdso32/Makefile
++++ b/arch/s390/kernel/vdso32/Makefile
+@@ -2,6 +2,7 @@
+ # List of files in the vdso, has to be asm only for now
+ 
+ KCOV_INSTRUMENT := n
++GCOV_PROFILE := n
+ 
+ obj-vdso32 = gettimeofday.o clock_getres.o clock_gettime.o note.o getcpu.o
+ 
+diff --git a/arch/s390/kernel/vdso64/Makefile b/arch/s390/kernel/vdso64/Makefile
+index ddebc26cd949..62151cd31dbb 100644
+--- a/arch/s390/kernel/vdso64/Makefile
++++ b/arch/s390/kernel/vdso64/Makefile
+@@ -2,6 +2,7 @@
+ # List of files in the vdso, has to be asm only for now
+ 
+ KCOV_INSTRUMENT := n
++GCOV_PROFILE := n
+ 
+ obj-vdso64 = gettimeofday.o clock_getres.o clock_gettime.o note.o getcpu.o
+ 
+diff --git a/arch/um/kernel/Makefile b/arch/um/kernel/Makefile
+index 2f36d515762e..642238a02bae 100644
+--- a/arch/um/kernel/Makefile
++++ b/arch/um/kernel/Makefile
+@@ -7,6 +7,7 @@
+ # accessing the instrumentation buffer for the first time from the
+ # kernel.
+ KCOV_INSTRUMENT                := n
++GCOV_PROFILE                := n
+ 
+ CPPFLAGS_vmlinux.lds := -DSTART=$(LDS_START)		\
+                         -DELF_ARCH=$(LDS_ELF_ARCH)	\
+diff --git a/arch/um/os-Linux/Makefile b/arch/um/os-Linux/Makefile
+index ada473bf6f46..bc57e85ca111 100644
+--- a/arch/um/os-Linux/Makefile
++++ b/arch/um/os-Linux/Makefile
+@@ -5,6 +5,7 @@
+ 
+ # Don't instrument UML-specific code
+ KCOV_INSTRUMENT                := n
++GCOV_PROFILE                := n
+ 
+ obj-y = aio.o execvp.o file.o helper.o irq.o main.o mem.o process.o \
+ 	registers.o sigio.o signal.o start_up.o time.o tty.o \
+diff --git a/arch/x86/boot/Makefile b/arch/x86/boot/Makefile
+index 9b5adae9cc40..ccea807999b9 100644
+--- a/arch/x86/boot/Makefile
++++ b/arch/x86/boot/Makefile
+@@ -18,6 +18,7 @@ OBJECT_FILES_NON_STANDARD	:= y
+ # inconsistent state and crashed. We are interested mostly in syscall coverage,
+ # so boot code is not interesting anyway.
+ KCOV_INSTRUMENT		:= n
++GCOV_PROFILE		:= n
+ 
+ # If you want to preset the SVGA mode, uncomment the next line and
+ # set SVGA_MODE to whatever number you want.
+diff --git a/arch/x86/boot/compressed/Makefile b/arch/x86/boot/compressed/Makefile
+index 466f66c8a7f8..c7a73d1ace0b 100644
+--- a/arch/x86/boot/compressed/Makefile
++++ b/arch/x86/boot/compressed/Makefile
+@@ -22,6 +22,7 @@ OBJECT_FILES_NON_STANDARD	:= y
+ 
+ # Prevents link failures: __sanitizer_cov_trace_pc() is not linked in.
+ KCOV_INSTRUMENT		:= n
++GCOV_PROFILE		:= n
+ 
+ targets := vmlinux vmlinux.bin vmlinux.bin.gz vmlinux.bin.bz2 vmlinux.bin.lzma \
+ 	vmlinux.bin.xz vmlinux.bin.lzo vmlinux.bin.lz4
+diff --git a/arch/x86/entry/vdso/Makefile b/arch/x86/entry/vdso/Makefile
+index 141d415a8c80..8e669eda2351 100644
+--- a/arch/x86/entry/vdso/Makefile
++++ b/arch/x86/entry/vdso/Makefile
+@@ -10,6 +10,7 @@ OBJECT_FILES_NON_STANDARD	:= y
+ 
+ # Prevents link failures: __sanitizer_cov_trace_pc() is not linked in.
+ KCOV_INSTRUMENT		:= n
++GCOV_PROFILE		:= n
+ 
+ VDSO64-$(CONFIG_X86_64)		:= y
+ VDSOX32-$(CONFIG_X86_X32_ABI)	:= y
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 8824d01c0c35..6b341054710f 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -41,6 +41,7 @@ endif
+ # boot, dumpstack/stacktrace, etc are either non-interesting or can lead to
+ # non-deterministic coverage.
+ KCOV_INSTRUMENT		:= n
++GCOV_PROFILE		:= n
+ 
+ CFLAGS_irq.o := -I$(src)/../include/asm/trace
+ 
+diff --git a/arch/x86/kernel/apic/Makefile b/arch/x86/kernel/apic/Makefile
+index a6fcaf16cdbf..34df719c183c 100644
+--- a/arch/x86/kernel/apic/Makefile
++++ b/arch/x86/kernel/apic/Makefile
+@@ -6,6 +6,7 @@
+ # Leads to non-deterministic coverage that is not a function of syscall inputs.
+ # In particualr, smp_apic_timer_interrupt() is called in random places.
+ KCOV_INSTRUMENT		:= n
++GCOV_PROFILE		:= n
+ 
+ obj-$(CONFIG_X86_LOCAL_APIC)	+= apic.o apic_common.o apic_noop.o ipi.o vector.o
+ obj-y				+= hw_nmi.o
+diff --git a/arch/x86/kernel/cpu/Makefile b/arch/x86/kernel/cpu/Makefile
+index 347137e80bf5..92db5689da98 100644
+--- a/arch/x86/kernel/cpu/Makefile
++++ b/arch/x86/kernel/cpu/Makefile
+@@ -11,7 +11,9 @@ endif
+ 
+ # If these files are instrumented, boot hangs during the first second.
+ KCOV_INSTRUMENT_common.o := n
++GCOV_PROFILE_common.o := n
+ KCOV_INSTRUMENT_perf_event.o := n
++GCOV_PROFILE_perf_event.o := n
+ 
+ # Make sure load_percpu_segment has no stackprotector
+ nostackp := $(call cc-option, -fno-stack-protector)
+diff --git a/arch/x86/lib/Makefile b/arch/x86/lib/Makefile
+index 25a972c61b0a..2d3881afb7e1 100644
+--- a/arch/x86/lib/Makefile
++++ b/arch/x86/lib/Makefile
+@@ -5,6 +5,7 @@
+ 
+ # Produces uninteresting flaky coverage.
+ KCOV_INSTRUMENT_delay.o	:= n
++GCOV_PROFILE_delay.o	:= n
+ 
+ inat_tables_script = $(srctree)/arch/x86/tools/gen-insn-attr-x86.awk
+ inat_tables_maps = $(srctree)/arch/x86/lib/x86-opcode-map.txt
+diff --git a/arch/x86/mm/Makefile b/arch/x86/mm/Makefile
+index 4b101dd6e52f..2b893a375dfd 100644
+--- a/arch/x86/mm/Makefile
++++ b/arch/x86/mm/Makefile
+@@ -2,7 +2,8 @@
+ # Kernel does not boot with instrumentation of tlb.c and mem_encrypt*.c
+ KCOV_INSTRUMENT_tlb.o			:= n
+ KCOV_INSTRUMENT_mem_encrypt.o		:= n
+-KCOV_INSTRUMENT_mem_encrypt_identity.o	:= n
++GCOV_PROFILE_tlb.o	:= n
++GCOV_PROFILE_mem_encrypt.o	:= n
+ 
+ KASAN_SANITIZE_mem_encrypt.o		:= n
+ KASAN_SANITIZE_mem_encrypt_identity.o	:= n
+diff --git a/arch/x86/purgatory/Makefile b/arch/x86/purgatory/Makefile
+index 3cf302b26332..9d15ce3b7cd9 100644
+--- a/arch/x86/purgatory/Makefile
++++ b/arch/x86/purgatory/Makefile
+@@ -14,6 +14,7 @@ targets += purgatory.ro
+ 
+ KASAN_SANITIZE	:= n
+ KCOV_INSTRUMENT := n
++GCOV_PROFILE := n
+ 
+ # Default KBUILD_CFLAGS can have -pg option set when FTRACE is enabled. That
+ # in turn leaves some undefined symbols like __fentry__ in purgatory and not
+diff --git a/arch/x86/realmode/rm/Makefile b/arch/x86/realmode/rm/Makefile
+index 4463fa72db94..9b970e6da637 100644
+--- a/arch/x86/realmode/rm/Makefile
++++ b/arch/x86/realmode/rm/Makefile
+@@ -11,6 +11,7 @@ OBJECT_FILES_NON_STANDARD	:= y
+ 
+ # Prevents link failures: __sanitizer_cov_trace_pc() is not linked in.
+ KCOV_INSTRUMENT		:= n
++GCOV_PROFILE		:= n
+ 
+ always := realmode.bin realmode.relocs
+ 
+diff --git a/arch/x86/um/vdso/Makefile b/arch/x86/um/vdso/Makefile
+index 822ccdba93ad..ec1c3400556b 100644
+--- a/arch/x86/um/vdso/Makefile
++++ b/arch/x86/um/vdso/Makefile
+@@ -5,6 +5,7 @@
+ 
+ # Prevents link failures: __sanitizer_cov_trace_pc() is not linked in.
+ KCOV_INSTRUMENT                := n
++GCOV_PROFILE                := n
+ 
+ VDSO64-y		:= y
+ 
+diff --git a/drivers/firmware/efi/libstub/Makefile b/drivers/firmware/efi/libstub/Makefile
+index c51627660dbb..536d76f587a8 100644
+--- a/drivers/firmware/efi/libstub/Makefile
++++ b/drivers/firmware/efi/libstub/Makefile
+@@ -34,6 +34,7 @@ OBJECT_FILES_NON_STANDARD	:= y
+ 
+ # Prevents link failures: __sanitizer_cov_trace_pc() is not linked in.
+ KCOV_INSTRUMENT			:= n
++GCOV_PROFILE			:= n
+ 
+ lib-y				:= efi-stub-helper.o gop.o secureboot.o tpm.o
+ 
+diff --git a/init/Makefile b/init/Makefile
+index a3e5ce2bcf08..35a81339217e 100644
+--- a/init/Makefile
++++ b/init/Makefile
+@@ -5,6 +5,9 @@
+ 
+ ccflags-y := -fno-function-sections -fno-data-sections
+ 
++# main.o does not produce usable profile data.
++GCOV_PROFILE_main.o := n
++
+ obj-y                          := main.o version.o mounts.o
+ ifneq ($(CONFIG_BLK_DEV_INITRD),y)
+ obj-y                          += noinitramfs.o
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 7a63d567fdb5..9910214f7490 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -23,12 +23,16 @@ endif
+ # Prevents flicker of uninteresting __do_softirq()/__local_bh_disable_ip()
+ # in coverage traces.
+ KCOV_INSTRUMENT_softirq.o := n
++GCOV_PROFILE_softirq.o := n
+ # These are called from save_stack_trace() on slub debug path,
+ # and produce insane amounts of uninteresting coverage.
+ KCOV_INSTRUMENT_module.o := n
++GCOV_PROFILE_module.o := n
+ KCOV_INSTRUMENT_extable.o := n
++GCOV_PROFILE_extable.o := n
+ # Don't self-instrument.
+ KCOV_INSTRUMENT_kcov.o := n
++GCOV_PROFILE_kcov.o := n
+ KASAN_SANITIZE_kcov.o := n
+ 
+ # cond_syscall is currently not LTO compatible
+diff --git a/lib/Makefile b/lib/Makefile
+index 423876446810..1d334c5d1301 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -12,10 +12,15 @@ endif
+ # flaky coverage that is not a function of syscall inputs. For example,
+ # rbtree can be global and individual rotations don't correlate with inputs.
+ KCOV_INSTRUMENT_string.o := n
++GCOV_PROFILE_string.o := n
+ KCOV_INSTRUMENT_rbtree.o := n
++GCOV_PROFILE_rbtree.o := n
+ KCOV_INSTRUMENT_list_debug.o := n
++GCOV_PROFILE_list_debug.o := n
+ KCOV_INSTRUMENT_debugobjects.o := n
++GCOV_PROFILE_debugobjects.o := n
+ KCOV_INSTRUMENT_dynamic_debug.o := n
++GCOV_PROFILE_dynamic_debug.o := n
+ 
+ lib-y := ctype.o string.o vsprintf.o cmdline.o \
+ 	 rbtree.o radix-tree.o timerqueue.o\
+@@ -199,6 +204,7 @@ obj-$(CONFIG_IRQ_POLL) += irq_poll.o
+ obj-$(CONFIG_STACKDEPOT) += stackdepot.o
+ KASAN_SANITIZE_stackdepot.o := n
+ KCOV_INSTRUMENT_stackdepot.o := n
++GCOV_PROFILE_stackdepot.o := n
+ 
+ libfdt_files = fdt.o fdt_ro.o fdt_wip.o fdt_rw.o fdt_sw.o fdt_strerror.o \
+ 	       fdt_empty_tree.o
+diff --git a/mm/kasan/Makefile b/mm/kasan/Makefile
+index 3289db38bc87..860095f727b4 100644
+--- a/mm/kasan/Makefile
++++ b/mm/kasan/Makefile
+@@ -2,6 +2,7 @@
+ KASAN_SANITIZE := n
+ UBSAN_SANITIZE_kasan.o := n
+ KCOV_INSTRUMENT := n
++GCOV_PROFILE := n
+ 
+ CFLAGS_REMOVE_kasan.o = -pg
+ # Function splitter causes unnecessary splits in __asan_load1/__asan_store1
+-- 
+2.19.2
+
