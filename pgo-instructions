@@ -4,7 +4,7 @@
 # https://reddit.com/r/kernel/comments/a2og7u/the_process_of_building_the_kernel_with_gcc/
 
 # In /usr/src/linux, run:
-./scripts/kgcov/buildGCOVKernel bzImage modules
+./scripts/gcov/buildGCOVKernel bzImage modules
 
 # The build will happen in a bind mounted /tmp/kernelsrc. 
 # When done, while still in /usr/src/linux, run
@@ -16,14 +16,14 @@
 
 mkdir profile
 for (( x=0; x<10; x++ )); do
-	sleep 3; ./scripts/kgcov/gather.sh profile/profile"${x}".tar.gz
+	sleep 3; ./scripts/gcov/gather.sh profile/profile"${x}".tar.gz
 done
 
-./scripts/kgcov/mergegcov.sh $(ls profile/*)
+./scripts/gcov/mergegcov.sh $(ls profile/*)
 
 # While still in /usr/src/linux, finally run:
 
-./scripts/kgcov/genPGOKernel bzImage modules
+./scripts/gcov/genPGOKernel bzImage modules
 
 # Then remove the gcov kernel files in /boot and /lib/modules
 # prior to installing (or change the name of the kernel prior to
@@ -40,14 +40,14 @@ gather()
 	echo "Running gather.sh ${count} times..."
 	mkdir profile
 	for (( x=0; x<"${count}"; x++ )); do
-		sleep 3; ./scripts/kgcov/gather.sh profile/profile"${x}".tar.gz
+		sleep 3; ./scripts/gcov/gather.sh profile/profile"${x}".tar.gz
 	done
 }
 
 merge()
 {
 	echo "Merging profile data..."
-	./scripts/kgcov/mergegcov.sh $(ls profile/*)
+	./scripts/gcov/mergegcov.sh $(ls profile/*)
 }
 
 
