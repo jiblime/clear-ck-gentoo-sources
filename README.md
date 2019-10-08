@@ -1,5 +1,7 @@
 **Preface:** This is a *different* collection of patchsets for applying to bare GNU/Linux kernels for the Gentoo GNU/Linux distribution. These patchsets are meant to be applied to a vanilla Linux kernel with no sublevel. Using dev-util/quilt is recommended to handle patching.
 
+This should be much easier to apply vs. the 4.19.77 set.
+
 Patches:
 ```
 ck1 patchset
