@@ -1,53 +1,6 @@
-# Credits to /u/JATmatic on reddit.com
-# and http://coolypf.com/kpgo
-
-# https://reddit.com/r/kernel/comments/a2og7u/the_process_of_building_the_kernel_with_gcc/
-
-# Combined ck patchset | ck-180 for 4.19
-ck.patch
-
-# This patch needs to be done separately (?).
-# It's a part of the 4.19.xx patchset.
-misc/sched_smt.patch
-
-# Incremental patch
-misc/4.19.77.patch
-
-# https://github.com/zen-kernel/zen-kernel/issues/132
-# Specific to 4.19.xx-ck1.
-misc/sched_smt_present.patch
-
-# gcov patchset
-# No need to change kernel settings since the gcov scripts will do that for you
-pgo/0003-Merged-the-GCOV-patch-from-http-coolypf.com-0001-Add.patch
-pgo/0004-Fix-crypto-jitterentropy.c-not-building-with-fprofil.patch
-pgo/0005-Provide-support-and-loads-of-misc-fixes-to-kernel-gc.patch
-pgo/0006-Adding-external-support-scripts-to-perform.patch
-pgo/0007-Applied-processGCOVMakefiles-script-to-the-kernel-so.patch
-pgo/0008-Fix-the-anoying-vmalloc-issue-in-gcov_info_dup.patch
-pgo/0009-Fixup-buildGCOVKernel-exit-status-never-worked-prope.patch
-pgo/0010-The-__gcov_time_profiler-gcov-callback-is-not-needed.patch
-pgo/0011-Improved-gcov-base.c-profile-machinery-reverted-to-u.patch
-pgo/0012-Enable-GCOV-again-on-some-specific-arch-x86-places.patch
-pgo/0013-Typo-and-GCC-version-fixups.patch
-pgo/0014-Add-GCOV-profile-dataset-merger-script.patch
-pgo/0015-Moved-kgcov-scripts-under-scripts-kgcov.patch
-pgo/0016-Testing-GCOV_PROFILE-y-effect-on-the-build.patch
-pgo/0017-Upgrade-to-kgcc-7.3.patch
-pgo/0018-Fixups.patch
-pgo/0019-Build-fixups.patch
-pgo/0020-Updated-PGO-scripts-for-gcc-8-version.patch
-pgo/0021-Updated-PGO-scripts-and-patched-calcsum-for-gcc-8-ve.patch
-
-# Gentoo specific patches
-misc/gentoo-flavor-4.19.77.patch
-
-# Awk >=5.0 fix
-misc/treewide-fix-awk-regexp-over-escaping.patch
-
-# Removed the reliance on kgcc and instead use the system's
-# gcov, gcov-tool, gcc, gcc-ar, and gcc-nm to build. 
-# This usually would invoke their respective /usr/bin/gcc* symlinks.
-# Note ~ gcov's version is matched for 9.2.0. You may need to edit
-#        gcov_version in scripts/kgcov/calcsum-4.9.cpp if there's a version mismatch.
-misc/edit-gcov-scripts.patch
+patchset/0001-4.19-ck-180-patchset.patch
+patchset/0002-4.19.6-patchset.patch
+patchset/0003-Working-GCOV-PGO-patchset.patch
+patchset/0004-Genpatches-for-4.19-Ryzen-Gen-3-temp-detection-ck-sy.patch
+patchset/0005-4.19.6-to-4.19.78-for-a-ck-gcov-patched-kernel.patch
+patchset/0006-Gawk-5.0-over-escaping-fix.patch

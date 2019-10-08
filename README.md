@@ -3,60 +3,21 @@
 Patches:
 ```
 ck1 patchset
-0001-MultiQueue-Skiplist-Scheduler-version-v0.180.patch
-0002-Fix-Werror-build-failure-in-tools.patch
-0003-Make-preemptible-kernel-default.patch
-0004-Expose-vmsplit-for-our-poor-32-bit-users.patch
-0005-Create-highres-timeout-variants-of-schedule_timeout-.patch
-0006-Special-case-calls-of-schedule_timeout-1-to-use-the-.patch
-0007-Convert-msleep-to-use-hrtimers-when-active.patch
-0008-Replace-all-schedule-timeout-1-with-schedule_min_hrt.patch
-0009-Replace-all-calls-to-schedule_timeout_interruptible-.patch
-0010-Replace-all-calls-to-schedule_timeout_uninterruptibl.patch
-0011-Don-t-use-hrtimer-overlay-when-pm_freezing-since-som.patch
-0012-Make-hrtimer-granularity-and-minimum-hrtimeout-confi.patch
-0013-Make-threaded-IRQs-optionally-the-default-which-can-.patch
-0014-Reinstate-default-Hz-of-100-in-combination-with-MuQS.patch
-0015-Swap-sucks.patch
-0016-Add-ck1-version.patch
 
-4.19 to 4.19.77 patch
+GCOV/PGO patchset for GCC/GCOV 9.2.0
 
+Genpatches
+Minor ck/systemd fix
+Gen 3 Ryzen temperature sensor detection
 
-Credits to /u/JATmatic on reddit.com and http://coolypf.com/kpgo
-https://reddit.com/r/kernel/comments/a2og7u/the_process_of_building_the_kernel_with_gcc/
-gcov/pgo patchset
-0003-Merged-the-GCOV-patch-from-http-coolypf.com-0001-Add.patch
-0004-Fix-crypto-jitterentropy.c-not-building-with-fprofil.patch
-0005-Provide-support-and-loads-of-misc-fixes-to-kernel-gc.patch
-0006-Adding-external-support-scripts-to-perform.patch
-0007-Applied-processGCOVMakefiles-script-to-the-kernel-so.patch
-0008-Fix-the-anoying-vmalloc-issue-in-gcov_info_dup.patch
-0009-Fixup-buildGCOVKernel-exit-status-never-worked-prope.patch
-0010-The-__gcov_time_profiler-gcov-callback-is-not-needed.patch
-0011-Improved-gcov-base.c-profile-machinery-reverted-to-u.patch
-0012-Enable-GCOV-again-on-some-specific-arch-x86-places.patch
-0013-Typo-and-GCC-version-fixups.patch
-0014-Add-GCOV-profile-dataset-merger-script.patch
-0015-Moved-kgcov-scripts-under-scripts-kgcov.patch
-0016-Testing-GCOV_PROFILE-y-effect-on-the-build.patch
-0017-Upgrade-to-kgcc-7.3.patch
-0018-Fixups.patch
-0019-Build-fixups.patch
-0020-Updated-PGO-scripts-for-gcc-8-version.patch
-0021-Updated-PGO-scripts-and-patched-calcsum-for-gcc-8-ve.patch
+4.19.78 patch
 
-genpatches
-1500_XATTR_USER_PREFIX.patch
-1510_fs-enable-link-security-restrictions-by-default.patch
-2000_BT-Check-key-sizes-only-if-Secure-Simple-Pairing-enabled.patch
-2500_usb-storage-Disable-UAS-on-JMicron-SATA-enclosure.patch
-2600_enable-key-swapping-for-apple-mac.patch
-4567_distro-Gentoo-Kconfig.patch
-
-Some fixes, like awk >=5.0 overescaping
-Forgot to add back in graysky2's GCC -march patch
+Gawk >=5.0 overescaping fix. This should not be applied if the
+current system's Gawk is version 4 or below (likely the case for most distros).
 ```
+
+I've profiled and am running a PGO'd 4.19.77 without issues, I haven't tested this one yet.
+
 
 #### clearly-faster-gentoo-sources-ck1
 

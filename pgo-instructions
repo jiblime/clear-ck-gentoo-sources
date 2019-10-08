@@ -28,3 +28,30 @@ done
 # Then remove the gcov kernel files in /boot and /lib/modules
 # prior to installing (or change the name of the kernel prior to
 # building it again). 
+
+
+Or use this janky wrapper script to take care of the profiling step.
+
+```
+#!/bin/bash
+
+gather()
+{
+	echo "Running gather.sh ${count} times..."
+	mkdir profile
+	for (( x=0; x<"${count}"; x++ )); do
+		sleep 3; ./scripts/kgcov/gather.sh profile/profile"${x}".tar.gz
+	done
+}
+
+merge()
+{
+	echo "Merging profile data..."
+	./scripts/kgcov/mergegcov.sh $(ls profile/*)
+}
+
+
+read -p "How many times to execute gather.sh? " -i 10 -e count
+
+gather merge
+```
