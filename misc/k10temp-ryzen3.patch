@@ -1,0 +1,270 @@
+Patch to provide support for k10 sensors that might work for Ryzen 2 and Ryzen 3 series processors.
+
+--- a/arch/x86/kernel/amd_nb.c
++++ b/arch/x86/kernel/amd_nb.c
+@@ -1,6 +1,7 @@
++// SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Shared support code for AMD K8 northbridges and derivates.
+- * Copyright 2006 Andi Kleen, SUSE Labs. Subject to GPLv2.
++ * Copyright 2006 Andi Kleen, SUSE Labs.
+  */
+ 
+ #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+@@ -11,14 +12,16 @@
+ #include <linux/errno.h>
+ #include <linux/export.h>
+ #include <linux/spinlock.h>
++#include <linux/pci_ids.h>
+ #include <asm/amd_nb.h>
+ 
+ #define PCI_DEVICE_ID_AMD_17H_ROOT	0x1450
+ #define PCI_DEVICE_ID_AMD_17H_M10H_ROOT	0x15d0
+-#define PCI_DEVICE_ID_AMD_17H_DF_F3	0x1463
++#define PCI_DEVICE_ID_AMD_17H_M30H_ROOT	0x1480
+ #define PCI_DEVICE_ID_AMD_17H_DF_F4	0x1464
+-#define PCI_DEVICE_ID_AMD_17H_M10H_DF_F3 0x15eb
+ #define PCI_DEVICE_ID_AMD_17H_M10H_DF_F4 0x15ec
++#define PCI_DEVICE_ID_AMD_17H_M30H_DF_F4 0x1494
++#define PCI_DEVICE_ID_AMD_17H_M70H_DF_F4 0x1444
+ 
+ /* Protect the PCI config register pairs used for SMN and DF indirect access. */
+ static DEFINE_MUTEX(smn_mutex);
+@@ -28,9 +31,11 @@ static u32 *flush_words;
+ static const struct pci_device_id amd_root_ids[] = {
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_ROOT) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M10H_ROOT) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M30H_ROOT) },
+ 	{}
+ };
+ 
++
+ #define PCI_DEVICE_ID_AMD_CNB17H_F4     0x1704
+ 
+ const struct pci_device_id amd_nb_misc_ids[] = {
+@@ -44,7 +49,9 @@ const struct pci_device_id amd_nb_misc_i
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_M30H_NB_F3) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_DF_F3) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M10H_DF_F3) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M30H_DF_F3) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_CNB17H_F3) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M70H_DF_F3) },
+ 	{}
+ };
+ EXPORT_SYMBOL_GPL(amd_nb_misc_ids);
+@@ -57,6 +64,8 @@ static const struct pci_device_id amd_nb
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_M30H_NB_F4) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_DF_F4) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M10H_DF_F4) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M30H_DF_F4) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M70H_DF_F4) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_CNB17H_F4) },
+ 	{}
+ };
+@@ -194,35 +203,70 @@ EXPORT_SYMBOL_GPL(amd_df_indirect_read);
+ 
+ int amd_cache_northbridges(void)
+ {
+-	u16 i = 0;
+-	struct amd_northbridge *nb;
++	const struct pci_device_id *misc_ids = amd_nb_misc_ids;
++	const struct pci_device_id *link_ids = amd_nb_link_ids;
++	const struct pci_device_id *root_ids = amd_root_ids;
+ 	struct pci_dev *root, *misc, *link;
++	struct amd_northbridge *nb;
++	u16 roots_per_misc = 0;
++	u16 misc_count = 0;
++	u16 root_count = 0;
++	u16 i, j;
+ 
+ 	if (amd_northbridges.num)
+ 		return 0;
+ 
+ 	misc = NULL;
+-	while ((misc = next_northbridge(misc, amd_nb_misc_ids)) != NULL)
+-		i++;
++	while ((misc = next_northbridge(misc, misc_ids)) != NULL)
++		misc_count++;
+ 
+-	if (!i)
++	if (!misc_count)
+ 		return -ENODEV;
+ 
+-	nb = kcalloc(i, sizeof(struct amd_northbridge), GFP_KERNEL);
++	root = NULL;
++	while ((root = next_northbridge(root, root_ids)) != NULL)
++		root_count++;
++
++	if (root_count) {
++		roots_per_misc = root_count / misc_count;
++
++		/*
++		 * There should be _exactly_ N roots for each DF/SMN
++		 * interface.
++		 */
++		if (!roots_per_misc || (root_count % roots_per_misc)) {
++			pr_info("Unsupported AMD DF/PCI configuration found\n");
++			return -ENODEV;
++		}
++	}
++
++	nb = kcalloc(misc_count, sizeof(struct amd_northbridge), GFP_KERNEL);
+ 	if (!nb)
+ 		return -ENOMEM;
+ 
+ 	amd_northbridges.nb = nb;
+-	amd_northbridges.num = i;
++	amd_northbridges.num = misc_count;
+ 
+ 	link = misc = root = NULL;
+-	for (i = 0; i != amd_northbridges.num; i++) {
++	for (i = 0; i < amd_northbridges.num; i++) {
+ 		node_to_amd_nb(i)->root = root =
+-			next_northbridge(root, amd_root_ids);
++			next_northbridge(root, root_ids);
+ 		node_to_amd_nb(i)->misc = misc =
+-			next_northbridge(misc, amd_nb_misc_ids);
++			next_northbridge(misc, misc_ids);
+ 		node_to_amd_nb(i)->link = link =
+-			next_northbridge(link, amd_nb_link_ids);
++			next_northbridge(link, link_ids);
++
++		/*
++		 * If there are more PCI root devices than data fabric/
++		 * system management network interfaces, then the (N)
++		 * PCI roots per DF/SMN interface are functionally the
++		 * same (for DF/SMN access) and N-1 are redundant.  N-1
++		 * PCI roots should be skipped per DF/SMN interface so
++		 * the following DF/SMN interfaces get mapped to
++		 * correct PCI roots.
++		 */
++		for (j = 1; j < roots_per_misc; j++)
++			root = next_northbridge(root, root_ids);
+ 	}
+ 
+ 	if (amd_gart_present())
+@@ -261,11 +305,12 @@ EXPORT_SYMBOL_GPL(amd_cache_northbridges
+  */
+ bool __init early_is_amd_nb(u32 device)
+ {
++	const struct pci_device_id *misc_ids = amd_nb_misc_ids;
+ 	const struct pci_device_id *id;
+ 	u32 vendor = device & 0xffff;
+ 
+ 	device >>= 16;
+-	for (id = amd_nb_misc_ids; id->vendor; id++)
++	for (id = misc_ids; id->vendor; id++)
+ 		if (vendor == id->vendor && device == id->device)
+ 			return true;
+ 	return false;
+--- a/drivers/hwmon/k10temp.c
++++ b/drivers/hwmon/k10temp.c
+@@ -1,20 +1,8 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * k10temp.c - AMD Family 10h/11h/12h/14h/15h/16h processor hardware monitoring
+  *
+  * Copyright (c) 2009 Clemens Ladisch <clemens@ladisch.de>
+- *
+- *
+- * This driver is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU General Public License; either
+- * version 2 of the License, or (at your option) any later version.
+- *
+- * This driver is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+- * See the GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this driver; if not, see <http://www.gnu.org/licenses/>.
+  */
+ 
+ #include <linux/err.h>
+@@ -23,6 +11,7 @@
+ #include <linux/init.h>
+ #include <linux/module.h>
+ #include <linux/pci.h>
++#include <linux/pci_ids.h>
+ #include <asm/amd_nb.h>
+ #include <asm/processor.h>
+ 
+@@ -41,14 +30,6 @@ static DEFINE_MUTEX(nb_smu_ind_mutex);
+ #define PCI_DEVICE_ID_AMD_15H_M70H_NB_F3	0x15b3
+ #endif
+ 
+-#ifndef PCI_DEVICE_ID_AMD_17H_DF_F3
+-#define PCI_DEVICE_ID_AMD_17H_DF_F3	0x1463
+-#endif
+-
+-#ifndef PCI_DEVICE_ID_AMD_17H_M10H_DF_F3
+-#define PCI_DEVICE_ID_AMD_17H_M10H_DF_F3	0x15eb
+-#endif
+-
+ /* CPUID function 0x80000001, ebx */
+ #define CPUID_PKGTYPE_MASK	0xf0000000
+ #define CPUID_PKGTYPE_F		0x00000000
+@@ -191,7 +172,7 @@ static ssize_t temp1_max_show(struct dev
+ 	return sprintf(buf, "%d\n", 70 * 1000);
+ }
+ 
+-static ssize_t show_temp_crit(struct device *dev,
++static ssize_t temp_crit_show(struct device *dev,
+ 			      struct device_attribute *devattr, char *buf)
+ {
+ 	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+@@ -209,12 +190,12 @@ static ssize_t show_temp_crit(struct dev
+ 
+ static DEVICE_ATTR_RO(temp1_input);
+ static DEVICE_ATTR_RO(temp1_max);
+-static SENSOR_DEVICE_ATTR(temp1_crit, S_IRUGO, show_temp_crit, NULL, 0);
+-static SENSOR_DEVICE_ATTR(temp1_crit_hyst, S_IRUGO, show_temp_crit, NULL, 1);
++static SENSOR_DEVICE_ATTR(temp1_crit, S_IRUGO, hwmon_temp_crit, NULL, 0);
++static SENSOR_DEVICE_ATTR(temp1_crit_hyst, S_IRUGO, hwmon_temp_crit, NULL, 1);
+ 
+-static SENSOR_DEVICE_ATTR(temp1_label, 0444, temp_label_show, NULL, 0);
++static SENSOR_DEVICE_ATTR(temp1_label, 0444, temp_label_show, NULL, 0);
+ static DEVICE_ATTR_RO(temp2_input);
+-static SENSOR_DEVICE_ATTR(temp2_label, 0444, temp_label_show, NULL, 1);
++static SENSOR_DEVICE_ATTR(temp2_label, 0444, temp_label_show, NULL, 1);
+ 
+ static umode_t k10temp_is_visible(struct kobject *kobj,
+ 				  struct attribute *attr, int index)
+@@ -325,11 +306,12 @@ static int k10temp_probe(struct pci_dev
+ 
+ 	data->pdev = pdev;
+ 
+-	if (boot_cpu_data.x86 == 0x15 && (boot_cpu_data.x86_model == 0x60 ||
+-					  boot_cpu_data.x86_model == 0x70)) {
++	if (boot_cpu_data.x86 == 0x15 &&
++	    ((boot_cpu_data.x86_model & 0xf0) == 0x60 ||
++	     (boot_cpu_data.x86_model & 0xf0) == 0x70)) {
+ 		data->read_htcreg = read_htcreg_nb_f15;
+ 		data->read_tempreg = read_tempreg_nb_f15;
+-	} else if (boot_cpu_data.x86 == 0x17) {
++	} else if (boot_cpu_data.x86 == 0x17 || boot_cpu_data.x86 == 0x18) {
+ 		data->temp_adjust_mask = 0x80000;
+ 		data->read_tempreg = read_tempreg_nb_f17;
+ 		data->show_tdie = true;
+@@ -366,6 +348,8 @@ static const struct pci_device_id k10tem
+ 	{ PCI_VDEVICE(AMD, PCI_DEVICE_ID_AMD_16H_M30H_NB_F3) },
+ 	{ PCI_VDEVICE(AMD, PCI_DEVICE_ID_AMD_17H_DF_F3) },
+ 	{ PCI_VDEVICE(AMD, PCI_DEVICE_ID_AMD_17H_M10H_DF_F3) },
++	{ PCI_VDEVICE(AMD, PCI_DEVICE_ID_AMD_17H_M30H_DF_F3) },
++	{ PCI_VDEVICE(AMD, PCI_DEVICE_ID_AMD_17H_M70H_DF_F3) },
+ 	{}
+ };
+ MODULE_DEVICE_TABLE(pci, k10temp_id_table);
+--- a/include/linux/pci_ids.h
++++ b/include/linux/pci_ids.h
+@@ -541,6 +541,10 @@
+ #define PCI_DEVICE_ID_AMD_16H_NB_F4	0x1534
+ #define PCI_DEVICE_ID_AMD_16H_M30H_NB_F3 0x1583
+ #define PCI_DEVICE_ID_AMD_16H_M30H_NB_F4 0x1584
++#define PCI_DEVICE_ID_AMD_17H_DF_F3	0x1463
++#define PCI_DEVICE_ID_AMD_17H_M10H_DF_F3 0x15eb
++#define PCI_DEVICE_ID_AMD_17H_M30H_DF_F3 0x1493
++#define PCI_DEVICE_ID_AMD_17H_M70H_DF_F3 0x1443
+ #define PCI_DEVICE_ID_AMD_CNB17H_F3	0x1703
+ #define PCI_DEVICE_ID_AMD_LANCE		0x2000
+ #define PCI_DEVICE_ID_AMD_LANCE_HOME	0x2001
