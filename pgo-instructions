@@ -1,18 +1,15 @@
-# Credits to /u/JATmatic on reddit.com
-# and http://coolypf.com/kpgo
+Credits to /u/JATmatic on reddit.com and http://coolypf.com/kpgo
+https://reddit.com/r/kernel/comments/a2og7u/the_process_of_building_the_kernel_with_gcc/
 
-# https://reddit.com/r/kernel/comments/a2og7u/the_process_of_building_the_kernel_with_gcc/
-
-# In /usr/src/linux, run:
+In /usr/src/linux, run:
 ./scripts/gcov/buildGCOVKernel bzImage modules
 
-# The build will happen in a bind mounted /tmp/kernelsrc. 
-# When done, while still in /usr/src/linux, run
-# make modules_install install
-# as well as creating a initramfs, rebuilding/resigning modules, etc.
+The build will happen in a bind mounted /tmp/kernelsrc. 
+When done, while still in /usr/src/linux, run
+make modules_install install
+as well as creating a initramfs, rebuilding/resigning modules, etc.
 
-# When booted into the gcov kernel, go to /usr/src/linux
-# and run:
+When booted into the gcov kernel, go to /usr/src/linux and run:
 
 mkdir profile
 for (( x=0; x<10; x++ )); do
@@ -21,14 +18,11 @@ done
 
 ./scripts/gcov/mergegcov.sh $(ls profile/*)
 
-# While still in /usr/src/linux, finally run:
+While still in /usr/src/linux, finally run (perhaps run `make clean` before as well):
 
 ./scripts/gcov/genPGOKernel bzImage modules
 
-# Then remove the gcov kernel files in /boot and /lib/modules
-# prior to installing (or change the name of the kernel prior to
-# building it again). 
-
+Then install as normal.
 
 Or use this janky wrapper script to take care of the profiling step.
 

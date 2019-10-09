@@ -1,0 +1,17 @@
+Warnings that need attn
+
+
+kernel/gcov/gcc_4_9.c:251:13: warning: 'gcov_merge_delta' defined but not used [-Wunused-function]
+  251 | static void gcov_merge_delta(struct gcov_ctr_info *dst,
+      |             ^~~~~~~~~~~~~~~~
+
+
+arch/x86/kernel/paravirt.c:50:1: warning: bad option '-fno-profile-values' to attribute 'optimize' [-Wattributes]
+   50 | extern void __attribute__((optimize("no-profile-values"))) _paravirt_nop(void);
+      | ^~~~~~
+arch/x86/kernel/paravirt.c:61:1: warning: bad option '-fno-profile-values' to attribute 'optimize' [-Wattributes]
+   61 | {
+      | ^
+arch/x86/kernel/paravirt.c:66:1: warning: bad option '-fno-profile-values' to attribute 'optimize' [-Wattributes]
+   66 | {
+      | ^

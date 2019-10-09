@@ -1,0 +1,114 @@
+Date: Tue, 8 Oct 2019
+Subject: [PATCH] Add -Og and -O3 optimization levels
+
+"-Og" adapted from: https://patchwork.kernel.org/cover/10658623/
+
+---
+ Makefile                     |  9 +++++++++
+ include/linux/compiler-gcc.h |  2 +-
+ init/Kconfig                 | 29 +++++++++++++++++++++++++++++
+ kernel/configs/tiny.config   |  2 ++
+ 4 files changed, 41 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index a9d67b67a..21856d79f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -676,6 +676,13 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning, format-overflow)
+ KBUILD_CFLAGS	+= $(call cc-disable-warning, int-in-bool-context)
+ KBUILD_CFLAGS	+= $(call cc-disable-warning, address-of-packed-member)
+ 
++ifdef CONFIG_CC_OPTIMIZE_FOR_PROFILING
++KBUILD_CFLAGS	+= -Og $(call cc-disable-warning,maybe-uninitialized,) -finline-small-functions -findirect-inlining -fpartial-inlining -finline-functions-called-once
++else
++ifdef CONFIG_CC_OPTIMIZE_AGGRESSIVELY
++KBUILD_CFLAGS	+= -O3 -fgraphite-identity -floop-nest-optimize -fdevirtualize-at-ltrans -fno-semantic-interposition -fno-math-errno -fno-trapping-math
++KBUILD_CFLAGS	+= $(call cc-disable-warning,maybe-uninitialized,)
++else
+ ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
+ KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
+ else
+@@ -685,6 +692,8 @@ else
+ KBUILD_CFLAGS   += -O2
+ endif
+ endif
++endif
++endif
+ 
+ # Enable GCC PGO + some additional optimizations if requested.
+ ifdef CONFIG_GCOV_PGO_ENABLE
+diff --git a/include/linux/compiler-gcc.h b/include/linux/compiler-gcc.h
+index 3ebee1ce6..056d3ce83 100644
+--- a/include/linux/compiler-gcc.h
++++ b/include/linux/compiler-gcc.h
+@@ -81,7 +81,7 @@
+ 
+ #define __compiletime_object_size(obj) __builtin_object_size(obj, 0)
+ 
+-#ifndef __CHECKER__
++#if !defined(__CHECKER__) && !defined(CONFIG_CC_OPTIMIZE_FOR_PROFILING)
+ #define __compiletime_warning(message) __attribute__((warning(message)))
+ #define __compiletime_error(message) __attribute__((error(message)))
+ 
+diff --git a/init/Kconfig b/init/Kconfig
+index a52ddd61a..d32dfcd1b 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1100,6 +1100,21 @@ config CC_OPTIMIZE_FOR_PERFORMANCE
+ 	  with the "-O2" compiler flag for best performance and most
+ 	  helpful compile-time warnings.
+ 
++config CC_OPTIMIZE_AGGRESSIVELY
++	bool "Optimize unsafely for performance"
++	help
++	  This will enable "-O3", which turns on vectorization and more
++	  aggressive loop transformations. In addition, experimental flags
++	  and flags that break IEEE/ISO standards are used.
++
++	  Since kernel code is written to be compiled with "-O2", there is
++	  no guarantee that these flags will cause the kernel to be faster
++	  and it may be slower. If you want to see optimization info, edit
++	  scripts/gcov/genPGOKernel with KCFLAGS="-fopt-info -fopt-info-missed"
++	  or -fsave-optimization-record if profile data is available.
++
++	  If unsure, say N.
++
+ config CC_OPTIMIZE_FOR_SIZE
+ 	bool "Optimize for size"
+ 	help
+@@ -1108,6 +1123,20 @@ config CC_OPTIMIZE_FOR_SIZE
+ 
+ 	  If unsure, say N.
+ 
++config CC_OPTIMIZE_FOR_PROFILING
++	bool "Optimize for profiling use"
++	depends on $(cc-option,-Og)
++	select NO_AUTO_INLINE
++	help
++	  This options allows the kernel to be built with the least
++	  number of optimizations, which is ideal for generating
++	  profiling data. The level is set to "-Og" and inlining
++	  optimizations required to compile the kernel are on.
++
++	  This should only be used for profiling or debugging.
++
++	  If unsure, say N.
++
+ endchoice
+ 
+ config HAVE_LD_DEAD_CODE_DATA_ELIMINATION
+diff --git a/kernel/configs/tiny.config b/kernel/configs/tiny.config
+index 7fa0c4ae6..cf230b4b0 100644
+--- a/kernel/configs/tiny.config
++++ b/kernel/configs/tiny.config
+@@ -1,5 +1,7 @@
+ # CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set
++# CONFIG_CC_OPTIMIZE_AGGRESSIVELY is not set
+ CONFIG_CC_OPTIMIZE_FOR_SIZE=y
++# CONFIG_CC_OPTIMIZE_FOR_PROFILING is not set
+ # CONFIG_KERNEL_GZIP is not set
+ # CONFIG_KERNEL_BZIP2 is not set
+ # CONFIG_KERNEL_LZMA is not set
+-- 
+2.23.0
+
