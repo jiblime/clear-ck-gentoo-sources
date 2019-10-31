@@ -23,8 +23,8 @@ Signed-off-by: Alex Xu (Hello71) <alex_y_xu@yahoo.ca>
 
 diff --git a/Documentation/arm/Samsung/clksrc-change-registers.awk b/Documentation/arm/Samsung/clksrc-change-registers.awk
 index 7be1b8aa7cd9..d853f750c861 100755
---- a/Documentation/arm/Samsung/clksrc-change-registers.awk
-+++ b/Documentation/arm/Samsung/clksrc-change-registers.awk
+--- a/Documentation/arm/samsung/clksrc-change-registers.awk
++++ b/Documentation/arm/samsung/clksrc-change-registers.awk
 @@ -67,7 +67,7 @@ BEGIN {
  # to replace and create an associative array of values
  
