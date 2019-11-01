@@ -45,18 +45,20 @@ Examples of what kernel tarballs to use, sourced from kernel.org. Using `git` to
 
 `https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.0.tar.xz`
 
-[Bare 5.0.0 Linux kernel](https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.0.tar.xz)
+`git clone --branch v5.3 https://github.com/torvalds/linux.git linux-v5.3`
 
-[Bare 5.1.0 Linux kernel](https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.1.tar.xz)
+`git clone https://github.com/torvalds/linux.git linux-git ; cd linux-git ; git v5.3`
 
 [Bare 5.2.0 Linux kernel](https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.2.tar.xz)
 
+[Bare 5.3.0 Linux kernel](https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.3.tar.xz)
+
 # Notes:
 
-- I have commented out some patches and explain why in the `series` file. 
-- I've made changes on patches in the past to patch successfully or to reduce fuzz. 5.2 has been the cleanest so far and didn't require any changes.
+- I have commented out some patches and explain why in the patch itself, `series` or in the clear patch generator. 
 - Enable the appropriate debugging modules if you face an issue you didn't experience prior to this kernel. The only time I've experienced severe stuttering was when I enabled compulsory IRQ threading. 
 - MuQSS's recommended settings: `CONFIG_HZ_100=Y` `CONFIG_RQ_MC=Y` `CONFIG_PSI is not set` `CONFIG_FORCE_IRQ_THREADING is not set`
+- Note: 5.3 has introduced CONFIG_RQ_LLC for CPUs with multiple last level caches
 
 
 ## Gentoo Example Installation (WIP)
@@ -65,17 +67,17 @@ Examples of what kernel tarballs to use, sourced from kernel.org. Using `git` to
 
 emerge -avu quilt dev-vcs/git  #  Optionally run `perl-cleaner --really-all` afterwards if Perl was upgraded
 
-wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.2.tar.xz
-xz -df linux-5.2.tar.xz && tar -xpf linux-5.2.tar && rm linux-5.2.tar
+wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.3.tar.xz
+xz -df linux-5.3.tar.xz && tar -xpf linux-5.3.tar && rm linux-5.3.tar
 
-mv linux-5.2 linux-5.2.9
-eselect kernel set linux-5.2.9
+mv linux-5.3 linux-5.3-ck1
+eselect kernel set linux-5.3-ck1
 cd /usr/src/linux
 
 git clone https://github.com/jiblime/clear-ck-gentoo-sources.git patches
 cd patches
 git submodule update --init submod-clear
-cd submod-clear; git checkout 5.2.17-836; cd ..
+cd submod-clear; git checkout $(git describe --tags `git rev-list --tags --max-count=1`); cd ..
 ./clear-patch-selector.sh
 
 # Below is a simple script to get your current .config into the directory quickly.
@@ -92,7 +94,7 @@ elif
 fi
 
 # You'll still need to update the config. listnewconfig and oldconfig work well.
-make listnewconfig
+make oldconfig
 
 ###
 # Below is generic kernel installation
@@ -101,5 +103,5 @@ make -j4
 make modules_install -j4
 emerge @module-rebuild # Remember to manually sign your kernel modules if a signature is required
 make install
-dracut --kver [default would be 5.2.9 unless you customized it, which I do] --lz4
+dracut --kver [whatever your kernelversion is] --lz4
 grub-mkconfig -o /boot/grub/grub.cfg
