@@ -18,6 +18,7 @@ echo -e "CVE patches\n${CVE}\n"
 
 create_cve()
 {
+echo -e "CVE patches are patches made to fix security issues in the kernel"
 read -p "Include CVE patches?[Y/n] " create_cve
 echo -e "User generated at: $(date)" > generated/0001-CL-CVE.patch
 
@@ -43,6 +44,7 @@ echo -e "FPGA patches\n${FPGA}\n"
 
 create_fpga()
 {
+echo -e "Field-programmable gate array\nUnlikely that you have this, but adding these patches won't do any harm"
 read -p "Include FPGA patches?[Y/n] " create_fpga
 echo -e "User generated at: $(date)" > generated/0002-CL-FPGA.patch
 
@@ -96,7 +98,8 @@ printf '%s\n' "${CLEAR[@]}"
 echo # \n
 shopt -u extglob
 
-read -p "Show list of patches excluded for compatibility? [yN] " show_ex
+echo -e "The rest of the patches; this is definitely what you're using Clear Linux patches for\n"
+read -p "Show list of patches excluded for compatibility? (These will not be added if you say yes or no) [yN] " show_ex
 case "${show_ex}" in
 	[Yy]*)
 		excluded_list=${cl_distro}
@@ -112,7 +115,7 @@ esac
 
 create_clr()
 {
-read -p "Include the rest of the Clear Linux patches?[Y/n] " create_clr
+read -p "Include the rest of the Clear Linux patches? (Recommended)[Y/n] " create_clr
 echo -e "User generated at: $(date)" > generated/0003-CL-CLR.patch
 
 case "${create_clr}" in

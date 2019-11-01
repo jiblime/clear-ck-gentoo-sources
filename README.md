@@ -47,7 +47,7 @@ Examples of what kernel tarballs to use, sourced from kernel.org. Using `git` to
 
 `git clone --branch v5.3 https://github.com/torvalds/linux.git linux-v5.3`
 
-`git clone https://github.com/torvalds/linux.git linux-git ; cd linux-git ; git v5.3`
+`git clone https://github.com/torvalds/linux.git linux-git ; cd linux-git ; git checkout v5.3`
 
 [Bare 5.2.0 Linux kernel](https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.2.tar.xz)
 
