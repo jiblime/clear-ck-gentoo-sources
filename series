@@ -14,7 +14,7 @@ ck-5.3/0013-Make-threaded-IRQs-optionally-the-default-which-can-.patch
 ck-5.3/0014-Reinstate-default-Hz-of-100-in-combination-with-MuQS.patch
 ck-5.3/0015-Swap-sucks.patch
 ck-5.3/0016-Make-nohz_full-not-be-picked-up-as-a-default-config-.patch
-ck-5.3/0017-Add-ck1-version.patch
+ck-5.3/0017-Add-ck1-version_adjusted.patch # Portage doesn't detect EXTRAVERSION correctly
 
 5.3-5.3.8.patch
 
