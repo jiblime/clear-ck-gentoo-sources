@@ -68,11 +68,16 @@ Examples of different ways to attain the two-point release kernel:
 # Notes:
 
 - Within the clear patch generator script are reasons as to why a patch is excluded.
+
 - Enable the appropriate debugging modules if you face an issue you didn't experience prior to this kernel. The only time I've experienced severe stuttering was when I enabled compulsory IRQ threading. 
+
 - MuQSS's recommended settings: 
 `CONFIG_HZ_100=Y`: Read the section under [*Tickless expiry:*](http://ck.kolivas.org/patches/muqss/sched-MuQSS.txt)
+
 `CONFIG_RQ_MC=Y`: Best for those who are interested in low latency, but the other runqueues have their uses
+
 - Note: 5.3 has introduced `CONFIG_RQ_LLC` for CPUs with multiple last level caches which many new processors have; worth testing!
+
  `CONFIG_FORCE_IRQ_THREADING is not set`: This is only needed for those who are unable to boot when `CONFIG_FORCE_IRQ_THREADING=Y`, and is off by default.
 
 
@@ -90,13 +95,17 @@ mv linux-5.3 linux-5.3-ck1
 eselect kernel set linux-5.3-ck1
 cd /usr/src/linux
 
-git clone --recurse-submodules https://github.com/jiblime/clear-ck-gentoo-sources.git patches
+git clone --recurse-submodules https://github.com/jiblime/clear-ck-gentoo-sources.git patches && cd patches
 -or-
-git clone https://github.com/jiblime/clear-ck-gentoo-sources.git patches
+git clone https://github.com/jiblime/clear-ck-gentoo-sources.git patches && cd patches
 git submodule update --init
 
-cd patches/submod-clear
-git checkout $(git describe --tags `git rev-list --tags --max-count=1`) ; cd ..
+To checkout the latest tag for a submodule instead of a random branch:
+cd submodules/clear
+git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
+
+And the same for submodules/zenpower
+
 
 ./clear-patch-selector.sh
 
