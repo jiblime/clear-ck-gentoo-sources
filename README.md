@@ -16,7 +16,9 @@ The intention of this project is to streamline the process of using the patching
 
 **4.** Graysky2's Kernel_gcc_patch is actually already in Gentoo's experimental patches, but graysky2 has updated his patch for GCC 9 and the options now include newer CPUs. Generating code optimized for your processor is a guaranteed performance boost. Because this newest patch is meant for GCC >9.1 and a kernel version that is >4.13, you may be interested in using his older patches instead if you currently don't have the newest GCC available. graysky2's GitHub homepage is located at below.
 
-**5/6/7/etc.** Random patches I've piled in to test. Read the heads of each patch to get a URL to patch source and some information. The (now) unmaintainted it87.c replacement is *still* much further ahead in development than the in-kernel version. 
+**5.** ocerman's zenpower module is an in kernel module now so there will be no need to sign it or rebuild it after creating a new kernel.
+
+**/6/7/etc.** Random patches I've piled in to test. Read the heads of each patch to get a URL to patch source and some information. The (now) unmaintainted it87.c replacement is *still* much further ahead in development than the in-kernel version. 
 
 
 ---
@@ -43,6 +45,11 @@ https://dev.gentoo.org/~mpagano/genpatches/
 **graysky2's architecture optimization patches**
 ```
 https://github.com/graysky2/kernel_gcc_patch
+```
+**ocerman's zenpower (and zenmonitor)**
+```
+https://github.com/ocerman/zenpower
+https://github.com/ocerman/zenmonitor
 ```
 
 

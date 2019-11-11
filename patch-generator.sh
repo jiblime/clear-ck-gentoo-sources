@@ -3,11 +3,11 @@
 # This initial section is a hack into getting the master tree of zenpower.git's zenpower.c file catted onto a patch
 # because I am lazy. It will probably break in the future unless you opt to pick a tag first prior to running this.
 
-if [[ -f sub-zenpower/zenpower.c ]] ; then
-	cp .sub-zenpower-skel/zenpower.skel misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
-	cp sub-zenpower/zenpower.c sub-zenpower/zenpower.potch
-	sed -i 's/^/+/g' sub-zenpower/zenpower.potch
-	cat sub-zenpower/zenpower.potch  >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch &&
+if [[ -f submodules/zenpower/zenpower.c ]] ; then
+	cp .submodules/zenpower-skel/zenpower.skel misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
+	cp submodules/zenpower/zenpower.c submodules/zenpower/zenpower.potch
+	sed -i 's/^/+/g' submodules/zenpower/zenpower.potch
+	cat submodules/zenpower/zenpower.potch  >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch &&
 	echo -e "\nCreated the freshest zenpower built in module available, courtesy of:"
 	echo -e "https://github.com/ocerman" # I hope that keeps working
 	echo -e "If it doesn't work but using ocerman's DKMS script does, use that instead\n"
@@ -22,13 +22,13 @@ fi
 # 	Identify and separate patches that reduce performance in lieu of security
 #	Specifically 0123-use-lfence-instead-of-rep-and-nop.patch
 
-version=$(cat sub-clear/upstream | sed 's/^.*\-//g; s/\.tar\.xz//g')
+version=$(cat submodules/clear/upstream | sed 's/^.*\-//g; s/\.tar\.xz//g')
 echo -e "Clear Linux's patches for $version.\n"
 
 
 cve-patches()
 {
-CVE=$(cd sub-clear; ls | grep '^CVE.*\.patch'; cd $OLDPWD)
+CVE=$(cd submodules/clear; ls | grep '^CVE.*\.patch'; cd $OLDPWD)
 echo -e "CVE patches\n${CVE}\n"
 }
 
@@ -36,15 +36,15 @@ create_cve()
 {
 echo -e "CVE patches are patches made to fix security issues in the kernel"
 read -p "Include CVE patches?[Y/n] " create_cve
-echo -e "User generated at: $(date)" > .generated/0001-CL-CVE.patch
+echo -e "User generated at: $(date)" > submodules/.generated/0001-CL-CVE.patch
 
 case "${create_cve}" in
 	[Yy]* | '')
-		cat sub-clear/CVE*.patch >> .generated/0001-CL-CVE.patch && echo -e "\n\e[32mAdded CVE patches.\e[0m\n"
+		cat submodules/clear/CVE*.patch >> submodules/.generated/0001-CL-CVE.patch && echo -e "\n\e[32mAdded CVE patches.\e[0m\n"
 		;;
 	[Nn]*)
 		echo -e "\n\e[31mNot adding CVE patches and removing older patches.\e[0m\n";
-		rm .generated/0001-CL-CVE.patch
+		rm submodules/.generated/0001-CL-CVE.patch
 		;;
 	*)
 		echo "Input unrecognized..."; create_cve
@@ -54,7 +54,7 @@ esac
 
 fpga-patches()
 {
-FPGA=$(cd sub-clear; ls | grep 'fpga.*\.patch'; cd $OLDPWD)
+FPGA=$(cd submodules/clear; ls | grep 'fpga.*\.patch'; cd $OLDPWD)
 echo -e "FPGA patches\n${FPGA}\n"
 }
 
@@ -62,15 +62,15 @@ create_fpga()
 {
 echo -e "Field-programmable gate array\nUnlikely that you have this, but adding these patches won't do any harm"
 read -p "Include FPGA patches?[Y/n] " create_fpga
-echo -e "User generated at: $(date)" > .generated/0002-CL-FPGA.patch
+echo -e "User generated at: $(date)" > submodules/.generated/0002-CL-FPGA.patch
 
 case "${create_fpga}" in
 	[Yy]* | '')
-		cat sub-clear/*fpga*.patch >> .generated/0002-CL-FPGA.patch && echo -e "\n\e[32mAdded FPGA patches.\e[0m\n"
+		cat submodules/clear/*fpga*.patch >> submodules/.generated/0002-CL-FPGA.patch && echo -e "\n\e[32mAdded FPGA patches.\e[0m\n"
 		;;
 	[Nn]*)
 		echo -e "\n\e[31mNot adding FPGA patches and removing older patches.\e[0m\n"
-		rm .generated/0002-CL-FPGA.patch
+		rm submodules/.generated/0002-CL-FPGA.patch
 		;;
 	*)
 		echo "Input unrecognized..."; create_fpga
@@ -108,7 +108,7 @@ cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch"
 # Same as above.
 
 
-CLEAR=($(cd sub-clear; ls !(${cl_distro}) | grep -v 'fpga\|^CVE\|.*patch\-\|perfbias' | grep '^.*\.patch'; cd $OLDPWD))
+CLEAR=($(cd submodules/clear; ls !(${cl_distro}) | grep -v 'fpga\|^CVE\|.*patch\-\|perfbias' | grep '^.*\.patch'; cd $OLDPWD))
 echo -e "Clear Linux patches"
 printf '%s\n' "${CLEAR[@]}"
 echo # \n
@@ -132,7 +132,7 @@ esac
 create_clr()
 {
 read -p "Include the rest of the Clear Linux patches? (Recommended)[Y/n] " create_clr
-echo -e "User generated at: $(date)" > .generated/0003-CL-CLR.patch
+echo -e "User generated at: $(date)" > submodules/.generated/0003-CL-CLR.patch
 
 case "${create_clr}" in
 	[Yy]* | '')
@@ -140,7 +140,7 @@ case "${create_clr}" in
 		;;
 	[Nn]*)
 		echo -e "\n\e[31mNot adding Clear Linux patches and removing older patches.\e[0m"
-		rm .generated/0003-CL-CLR.patch
+		rm submodules/.generated/0003-CL-CLR.patch
 		;;
 	*)
 		echo "Input unrecognized..."; create_clr
@@ -150,7 +150,7 @@ esac
 warpten()
 {
 for ((i=0; i<${#CLEAR[@]}; i++)); do
-	cat sub-clear/"${CLEAR[i]}" >> .generated/0003-CL-CLR.patch;
+	cat submodules/clear/"${CLEAR[i]}" >> submodules/.generated/0003-CL-CLR.patch;
 done
 }
 
@@ -164,4 +164,4 @@ fpga-patches && create_fpga
 cl-patches && create_clr
 
 
-cat .generated/00*CL*.patch > .generated/clear.patch && echo -e "Created new Clear Linux patchset at .generated/clear.patch."
+cat submodules/.generated/00*CL*.patch > submodules/.generated/clear.patch && echo -e "Created new Clear Linux patchset at submodules/.generated/clear.patch."
