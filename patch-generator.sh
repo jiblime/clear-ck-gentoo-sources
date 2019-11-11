@@ -4,10 +4,10 @@
 # because I am lazy. It will probably break in the future unless you opt to pick a tag first prior to running this.
 
 if [[ -f submodules/zenpower/zenpower.c ]] ; then
-	cp .submodules/zenpower-skel/zenpower.skel misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
-	cp submodules/zenpower/zenpower.c submodules/zenpower/zenpower.potch
-	sed -i 's/^/+/g' submodules/zenpower/zenpower.potch
-	cat submodules/zenpower/zenpower.potch  >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch &&
+	cp submodules/.zenpower-skel/zenpower.skel misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
+	cp submodules/zenpower/zenpower.c submodules/.zenpower-skel/zenpower.potch
+	sed -i 's/^/+/g' submodules/.zenpower-skel/zenpower.potch
+	cat submodules/.zenpower-skel/zenpower.potch  >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch &&
 	echo -e "\nCreated the freshest zenpower built in module available, courtesy of:"
 	echo -e "https://github.com/ocerman" # I hope that keeps working
 	echo -e "If it doesn't work but using ocerman's DKMS script does, use that instead\n"
@@ -104,9 +104,10 @@ cl_distro+="*-zero-extra-registers.patch|"
 # Requires GCC patch. https://github.com/clearlinux-pkgs/gcc/blob/master/zero-regs-gcc8.patch
 cl_distro+="*-x86-microcode-Force-update-a-uCode-even-if-the-rev-i.patch|"
 # Intel specific? Unsure of the need for this.
-cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch"
+cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch|"
 # Same as above.
-
+cl_distro+="*-add-workaround-for-binutils-optimization.patch"
+# x86_64-pc-linux-gnu/bin/as: unrecognized option '-mbranches-within-no-boundaries'
 
 CLEAR=($(cd submodules/clear; ls !(${cl_distro}) | grep -v 'fpga\|^CVE\|.*patch\-\|perfbias' | grep '^.*\.patch'; cd $OLDPWD))
 echo -e "Clear Linux patches"

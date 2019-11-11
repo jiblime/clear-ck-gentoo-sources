@@ -1,5 +1,6 @@
 .series
-./generated/0001-CL-CVE.patch
-.generated/0002-CL-FPGA.patch
-.generated/0003-CL-CLR.patch
-
+0001-CL-CVE.patch
+0002-CL-FPGA.patch
+0003-CL-CLR.patch
+clear.patch
+zenpower.potch

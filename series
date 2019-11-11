@@ -16,7 +16,7 @@ ck-5.3/0015-Swap-sucks.patch
 ck-5.3/0016-Make-nohz_full-not-be-picked-up-as-a-default-config-.patch
 ck-5.3/0017-Add-ck1-version_ADJUSTED.patch # Portage doesn't detect EXTRAVERSION correctly
 
-.generated/clear.patch
+submodules/.generated/clear.patch
 
 misc/0003-v5.3_turbosched-v4.patch
 # Read patch header for more info

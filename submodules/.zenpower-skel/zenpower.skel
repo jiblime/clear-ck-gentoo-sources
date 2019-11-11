@@ -1,0 +1,59 @@
+From 7dfe062028db1206a781694d36373ac797ce2d1f Mon Sep 17 00:00:00 2001
+From: jiblime <47689567+jiblime@users.noreply.github.com>
+Date: Sun, 13 Oct 2019 15:25:12 -0700
+Subject: [PATCH] Added zenpower 0.1.4 as a module for extra Ryzen sensor
+ support
+
+---
+ drivers/hwmon/Kconfig    |  16 ++
+ drivers/hwmon/Makefile   |   2 +
+ drivers/hwmon/zenpower.c | 381 +++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 399 insertions(+)
+ create mode 100644 drivers/hwmon/zenpower.c
+
+diff --git a/drivers/hwmon/Kconfig b/drivers/hwmon/Kconfig
+index 650dd71f9..b354a2ad2 100644
+--- a/drivers/hwmon/Kconfig
++++ b/drivers/hwmon/Kconfig
+@@ -284,6 +284,22 @@ config SENSORS_K10TEMP
+ 	  This driver can also be built as a module. If so, the module
+ 	  will be called k10temp.
+ 
++config SENSORS_ZENPOWER
++	tristate "AMD Zen Family temperature sensor"
++	depends on X86 && PCI && AMD_NB && !SENSORS_K10TEMP=y
++	help
++	  If you say yes here you get support for the temperature
++	  sensor(s) inside your CPU. Supported is the AMD Zen
++	  microarchitecture. This module enables reading of the
++	  temperature, voltage(SVI2), current(SVI2) and power(SVI2)
++	  sensors. NOTE: k10temp cannot be loaded at the same time
++	  as this driver because they are accessing the same PCI
++	  devices. SENSORS_K10TEMP should be blacklisted or not built,
++	  otherwise you may have difficulty using/loading zenpower.
++
++	  This driver can also be built as a module. If so, the module
++	  will be called zenpower.
++
+ config SENSORS_FAM15H_POWER
+ 	tristate "AMD Family 15h processor power"
+ 	depends on X86 && PCI && CPU_SUP_AMD
+diff --git a/drivers/hwmon/Makefile b/drivers/hwmon/Makefile
+index 8db472ea0..3a874bb5c 100644
+--- a/drivers/hwmon/Makefile
++++ b/drivers/hwmon/Makefile
+@@ -178,6 +178,8 @@ obj-$(CONFIG_SENSORS_W83L786NG)	+= w83l786ng.o
+ obj-$(CONFIG_SENSORS_WM831X)	+= wm831x-hwmon.o
+ obj-$(CONFIG_SENSORS_WM8350)	+= wm8350-hwmon.o
+ obj-$(CONFIG_SENSORS_XGENE)	+= xgene-hwmon.o
++obj-$(CONFIG_SENSORS_ZENPOWER)	+= zenpower.o
++
+ 
+ obj-$(CONFIG_SENSORS_OCC)	+= occ/
+ obj-$(CONFIG_PMBUS)		+= pmbus/
+diff --git a/drivers/hwmon/zenpower.c b/drivers/hwmon/zenpower.c
+new file mode 100644
+index 000000000..098a8382f
+--- /dev/null
++++ b/drivers/hwmon/zenpower.c
+@@ -0,0 +1,381 @@
