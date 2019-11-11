@@ -74,11 +74,11 @@ Examples of different ways to attain the two-point release kernel:
 - MuQSS's recommended settings: 
 `CONFIG_HZ_100=Y`: Read the section under [*Tickless expiry:*](http://ck.kolivas.org/patches/muqss/sched-MuQSS.txt)
 
-`CONFIG_RQ_MC=Y`: Best for those who are interested in low latency, but the other runqueues have their uses
+- `CONFIG_RQ_MC=Y`: Best for those who are interested in low latency, but the other runqueues have their uses
 
 - Note: 5.3 has introduced `CONFIG_RQ_LLC` for CPUs with multiple last level caches which many new processors have; worth testing!
 
- `CONFIG_FORCE_IRQ_THREADING is not set`: This is only needed for those who are unable to boot when `CONFIG_FORCE_IRQ_THREADING=Y`, and is off by default.
+-  `CONFIG_FORCE_IRQ_THREADING is not set`: This is only needed for those who are unable to boot when `CONFIG_FORCE_IRQ_THREADING=Y`, and is off by default.
 
 
 
@@ -107,7 +107,7 @@ git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
 And the same for submodules/zenpower
 
 
-./clear-patch-selector.sh
+./patch-generator.sh
 
 # Below is a simple script to get your current .config into the directory quickly if you need one provided.
 # It first checks /proc/config.gz then /boot. All you need to do is copy/paste it into terminal.
@@ -129,10 +129,12 @@ make oldconfig
 ###
 # Below is a generic kernel installation using dracut to create a separate initrd that compiles in tmpfs to save...seconds?
 
-mount --rbind /usr/src/linux /tmp/kernel -v
-cd /tmp/kernel
+#!/bin/bash
+mkdir /tmp/fslinux
+mount --rbind /usr/src/linux /tmp/fslinux -v
+cd /tmp/fslinux
 make clean
-make -j$(cat /proc/cpuinfo | grep processor | wc -l) &&
+make -j$(cat /proc/cpuinfo | grep processor | wc -l) && cd /usr/src/linux &&
 make modules_install install -j$(cat /proc/cpuinfo | grep processor | wc -l) &&
 emerge @module-rebuild
 dracut --kver $(file /usr/src/linux/arch/x86/boot/bzImage | sed 's/^.*version\ //g ; s/\ .*//g') --xz --fstab
