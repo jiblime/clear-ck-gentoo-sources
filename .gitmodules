@@ -1,3 +1,6 @@
-[submodule "clear"]
-	path = submod-clear
+[submodule "sub-clear"]
+	path = sub-clear
 	url = https://github.com/clearlinux-pkgs/linux.git
+[submodule "sub-zenpower"]
+	path = sub-zenpower
+	url = https://github.com/ocerman/zenpower.git

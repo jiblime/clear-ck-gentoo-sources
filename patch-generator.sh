@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# This initial section is a hack into getting the master tree of zenpower.git's zenpower.c file catted onto a patch
+# because I am lazy. It will probably break in the future unless you opt to pick a tag first prior to running this.
+
+if [[ -f sub-zenpower/zenpower.c ]] ; then
+	cp .sub-zenpower-skel/zenpower.skel misc/Add-git-version-of-zenpower-as-a-builtin-module.patch -v
+	cat sub-zenpower/zenpower.c >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch &&
+	echo "Created the freshest zenpower built in module available, courtesy of:
+	echo "https://github.com/ocerman" # I hope that keeps working
+fi
+
+
+
+
 # Splits clear patches by inclusion and finally puts them all into one without needing to edit the series file.
 
 # TODO: Use case statements instead
@@ -20,15 +33,15 @@ create_cve()
 {
 echo -e "CVE patches are patches made to fix security issues in the kernel"
 read -p "Include CVE patches?[Y/n] " create_cve
-echo -e "User generated at: $(date)" > generated/0001-CL-CVE.patch
+echo -e "User generated at: $(date)" > .generated/0001-CL-CVE.patch
 
 case "${create_cve}" in
 	[Yy]* | '')
-		cat submod-clear/CVE*.patch >> generated/0001-CL-CVE.patch && echo -e "\n\e[32mAdded CVE patches.\e[0m\n"
+		cat submod-clear/CVE*.patch >> .generated/0001-CL-CVE.patch && echo -e "\n\e[32mAdded CVE patches.\e[0m\n"
 		;;
 	[Nn]*)
 		echo -e "\n\e[31mNot adding CVE patches and removing older patches.\e[0m\n";
-		rm generated/0001-CL-CVE.patch
+		rm .generated/0001-CL-CVE.patch
 		;;
 	*)
 		echo "Input unrecognized..."; create_cve
@@ -46,15 +59,15 @@ create_fpga()
 {
 echo -e "Field-programmable gate array\nUnlikely that you have this, but adding these patches won't do any harm"
 read -p "Include FPGA patches?[Y/n] " create_fpga
-echo -e "User generated at: $(date)" > generated/0002-CL-FPGA.patch
+echo -e "User generated at: $(date)" > .generated/0002-CL-FPGA.patch
 
 case "${create_fpga}" in
 	[Yy]* | '')
-		cat submod-clear/*fpga*.patch >> generated/0002-CL-FPGA.patch && echo -e "\n\e[32mAdded FPGA patches.\e[0m\n"
+		cat submod-clear/*fpga*.patch >> .generated/0002-CL-FPGA.patch && echo -e "\n\e[32mAdded FPGA patches.\e[0m\n"
 		;;
 	[Nn]*)
 		echo -e "\n\e[31mNot adding FPGA patches and removing older patches.\e[0m\n"
-		rm generated/0002-CL-FPGA.patch
+		rm .generated/0002-CL-FPGA.patch
 		;;
 	*)
 		echo "Input unrecognized..."; create_fpga
@@ -116,7 +129,7 @@ esac
 create_clr()
 {
 read -p "Include the rest of the Clear Linux patches? (Recommended)[Y/n] " create_clr
-echo -e "User generated at: $(date)" > generated/0003-CL-CLR.patch
+echo -e "User generated at: $(date)" > .generated/0003-CL-CLR.patch
 
 case "${create_clr}" in
 	[Yy]* | '')
@@ -124,7 +137,7 @@ case "${create_clr}" in
 		;;
 	[Nn]*)
 		echo -e "\n\e[31mNot adding Clear Linux patches and removing older patches.\e[0m"
-		rm generated/0003-CL-CLR.patch
+		rm .generated/0003-CL-CLR.patch
 		;;
 	*)
 		echo "Input unrecognized..."; create_clr
@@ -134,7 +147,7 @@ esac
 warpten()
 {
 for ((i=0; i<${#CLEAR[@]}; i++)); do
-	cat submod-clear/"${CLEAR[i]}" >> generated/0003-CL-CLR.patch;
+	cat submod-clear/"${CLEAR[i]}" >> .generated/0003-CL-CLR.patch;
 done
 }
 
@@ -148,4 +161,4 @@ fpga-patches && create_fpga
 cl-patches && create_clr
 
 
-cat generated/00*CL*.patch > generated/clear.patch && echo -e "Created new Clear Linux patchset at generated/clear.patch."
+cat .generated/00*CL*.patch > .generated/clear.patch && echo -e "Created new Clear Linux patchset at .generated/clear.patch."

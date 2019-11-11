@@ -14,29 +14,51 @@ ck-5.3/0013-Make-threaded-IRQs-optionally-the-default-which-can-.patch
 ck-5.3/0014-Reinstate-default-Hz-of-100-in-combination-with-MuQS.patch
 ck-5.3/0015-Swap-sucks.patch
 ck-5.3/0016-Make-nohz_full-not-be-picked-up-as-a-default-config-.patch
-ck-5.3/0017-Add-ck1-version_adjusted.patch # Portage doesn't detect EXTRAVERSION correctly
+ck-5.3/0017-Add-ck1-version_ADJUSTED.patch # Portage doesn't detect EXTRAVERSION correctly
 
-5.3-5.3.8.patch
-
-generated/clear.patch
+.generated/clear.patch
 
 misc/0003-v5.3_turbosched-v4.patch
 # Read patch header for more info
+# https://github.com/Tk-Glitch/PKGBUILDS/blob/master/linux53-tkg/linux53-tkg-patches/0003-v5.3_turbosched-v4.patch#L4
+
 misc/0007-v5.3-fsync.patch
 # Read patch header for more info
-misc/Added-zenpower-0.1.4-as-a-module-for-extra-Ryzen-sen.patch
-# Read patch header for more info
+# https://github.com/Tk-Glitch/PKGBUILDS/blob/master/linux53-tkg/linux53-tkg-patches/0007-v5.3-fsync.patch
+
+misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
+# misc/Added-zenpower-0.1.4-as-a-module-for-extra-Ryzen-sen.patch You can use this version instead since it is known to work. Make sure to rename the *nopatch to patch and comment out the above
+# Add zenpower as a built-in module instead of using DKMS or @module-rebuild to make it.
+
 misc/amd-iommu-fix.patch
-# Read patch header for more info
+# Read patch header for more info | Does this work?
+
 misc/enable_additional_cpu_optimizations_for_gcc_v9.1+_kernel_v4.13+.patch
-# graysky2's arch specific tunable
+# graysky2's arch specific tunables
+# https://github.com/graysky2/kernel_gcc_patch
+
 misc/fix-systemd-detect-virt.patch
-# Read patch header for more info
+# Fixes systemd-detect-virt in kernels built with the ck patchset
+# https://github.com/ckolivas/linux/pull/17/commits/3d6e52f1415a5bcdc6b06f10f9a48388597fcd60
+
 misc/gentoo-flavor-5.3.patch
-# Add conf options that force options in the config (does not add code to the kernel)
+# 1500_XATTR_USER_PREFIX.patch
+# 1510_fs-enable-link-security-restrictions-by-default.patch
+# 2000_BT-Check-key-sizes-only-if-Secure-Simple-Pairing-enabled.patch
+# 2500_usb-storage-Disable-UAS-on-JMicron-SATA-enclosure.patch
+# 2600_enable-key-swapping-for-apple-mac.patch
+# 4567_distro-Gentoo-Kconfig.patch
+
 misc/iwd-rfkill.patch
 # Supposed to fix issues with Intel's iwd
+
 misc/Replaced-drivers-hwmon-it87.c.patch
 # Replaced the in-kernel it87 with a much better version
+# https://github.com/herocodemaster/it87 | This is a mirror
+
 misc/treewide-fix-awk-regexp-over-escaping.patch
 # Fixes issues wih building the kernel with gawk >=5.0
+# https://lkml.org/lkml/2019/5/18/223
+
+5.3.0-5.3.10.patch
+# Bump it!
