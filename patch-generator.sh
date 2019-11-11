@@ -4,10 +4,13 @@
 # because I am lazy. It will probably break in the future unless you opt to pick a tag first prior to running this.
 
 if [[ -f sub-zenpower/zenpower.c ]] ; then
-	cp .sub-zenpower-skel/zenpower.skel misc/Add-git-version-of-zenpower-as-a-builtin-module.patch -v
-	cat sub-zenpower/zenpower.c >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch &&
-	echo "Created the freshest zenpower built in module available, courtesy of:
-	echo "https://github.com/ocerman" # I hope that keeps working
+	cp .sub-zenpower-skel/zenpower.skel misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
+	cp sub-zenpower/zenpower.c sub-zenpower/zenpower.potch
+	sed -i 's/^/+/g' sub-zenpower/zenpower.potch
+	cat sub-zenpower/zenpower.potch  >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch &&
+	echo -e "\nCreated the freshest zenpower built in module available, courtesy of:"
+	echo -e "https://github.com/ocerman" # I hope that keeps working
+	echo -e "If it doesn't work but using ocerman's DKMS script does, use that instead\n"
 fi
 
 
@@ -19,13 +22,13 @@ fi
 # 	Identify and separate patches that reduce performance in lieu of security
 #	Specifically 0123-use-lfence-instead-of-rep-and-nop.patch
 
-version=$(cat submod-clear/upstream | sed 's/^.*\-//g; s/\.tar\.xz//g')
+version=$(cat sub-clear/upstream | sed 's/^.*\-//g; s/\.tar\.xz//g')
 echo -e "Clear Linux's patches for $version.\n"
 
 
 cve-patches()
 {
-CVE=$(cd submod-clear; ls | grep '^CVE.*\.patch'; cd $OLDPWD)
+CVE=$(cd sub-clear; ls | grep '^CVE.*\.patch'; cd $OLDPWD)
 echo -e "CVE patches\n${CVE}\n"
 }
 
@@ -37,7 +40,7 @@ echo -e "User generated at: $(date)" > .generated/0001-CL-CVE.patch
 
 case "${create_cve}" in
 	[Yy]* | '')
-		cat submod-clear/CVE*.patch >> .generated/0001-CL-CVE.patch && echo -e "\n\e[32mAdded CVE patches.\e[0m\n"
+		cat sub-clear/CVE*.patch >> .generated/0001-CL-CVE.patch && echo -e "\n\e[32mAdded CVE patches.\e[0m\n"
 		;;
 	[Nn]*)
 		echo -e "\n\e[31mNot adding CVE patches and removing older patches.\e[0m\n";
@@ -51,7 +54,7 @@ esac
 
 fpga-patches()
 {
-FPGA=$(cd submod-clear; ls | grep 'fpga.*\.patch'; cd $OLDPWD)
+FPGA=$(cd sub-clear; ls | grep 'fpga.*\.patch'; cd $OLDPWD)
 echo -e "FPGA patches\n${FPGA}\n"
 }
 
@@ -63,7 +66,7 @@ echo -e "User generated at: $(date)" > .generated/0002-CL-FPGA.patch
 
 case "${create_fpga}" in
 	[Yy]* | '')
-		cat submod-clear/*fpga*.patch >> .generated/0002-CL-FPGA.patch && echo -e "\n\e[32mAdded FPGA patches.\e[0m\n"
+		cat sub-clear/*fpga*.patch >> .generated/0002-CL-FPGA.patch && echo -e "\n\e[32mAdded FPGA patches.\e[0m\n"
 		;;
 	[Nn]*)
 		echo -e "\n\e[31mNot adding FPGA patches and removing older patches.\e[0m\n"
@@ -105,7 +108,7 @@ cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch"
 # Same as above.
 
 
-CLEAR=($(cd submod-clear; ls !(${cl_distro}) | grep -v 'fpga\|^CVE\|.*patch\-\|perfbias' | grep '^.*\.patch'; cd $OLDPWD))
+CLEAR=($(cd sub-clear; ls !(${cl_distro}) | grep -v 'fpga\|^CVE\|.*patch\-\|perfbias' | grep '^.*\.patch'; cd $OLDPWD))
 echo -e "Clear Linux patches"
 printf '%s\n' "${CLEAR[@]}"
 echo # \n
@@ -147,7 +150,7 @@ esac
 warpten()
 {
 for ((i=0; i<${#CLEAR[@]}; i++)); do
-	cat submod-clear/"${CLEAR[i]}" >> .generated/0003-CL-CLR.patch;
+	cat sub-clear/"${CLEAR[i]}" >> .generated/0003-CL-CLR.patch;
 done
 }
 

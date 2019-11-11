@@ -1,7 +1,0 @@
-[submodule "clear"]
-	path = sub-clrlinux-patches
-	url  = https://github.com/clearlinux-pkgs/linux.git
-
-[submodule "zenpower"]
-	path = sub-zenpower
-	url  = https://github.com/ocerman/zenpower.git
