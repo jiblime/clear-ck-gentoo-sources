@@ -1,26 +1,29 @@
 #!/bin/bash
 
+git submodule update --init
+
 # This initial section is a hack into getting the master tree of zenpower.git's zenpower.c file catted onto a patch
 # because I am lazy. It will probably break in the future unless you opt to pick a tag first prior to running this.
+# Right now, it is working on 5.2/5.3/5.4-rc8 (<=5.2 requires patches for Zen 2 processors)
 
 if [[ -f submodules/zenpower/zenpower.c ]] ; then
 	cp submodules/.zenpower-skel/zenpower.skel misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
+	echo "@@ -0,0 +1,$(cat submodules/zenpower/zenpower.c | wc -l) @@" >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
 	cp submodules/zenpower/zenpower.c submodules/.zenpower-skel/zenpower.potch
 	sed -i 's/^/+/g' submodules/.zenpower-skel/zenpower.potch
 	cat submodules/.zenpower-skel/zenpower.potch  >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch &&
-	echo -e "\nCreated the freshest zenpower built in module available, courtesy of:"
-	echo -e "https://github.com/ocerman" # I hope that keeps working
-	echo -e "If it doesn't work but using ocerman's DKMS script does, use that instead\n"
+	ls --color=always misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
+	echo -e "Created the freshest zenpower built in module available, courtesy of:"
+	echo -e "https://github.com/ocerman. Best used with https://github.com/ocerman/zenmonitor"
+	echo -e "If you do not have a Ryzen processor, disable CONFIG_SENSORS_ZENPOWER"
 fi
 
+# Below, Clear patches are categorized and then combined all into one so the series file doesn't need adjustment
 
-
-
-# Splits clear patches by inclusion and finally puts them all into one without needing to edit the series file.
-
-# TODO: Use case statements instead
-# 	Identify and separate patches that reduce performance in lieu of security
-#	Specifically 0123-use-lfence-instead-of-rep-and-nop.patch
+# IDEAS: Use case statements instead
+# 	Identify and exclude patches that reduce performance in lieu of security
+#	Create an additional prompt for Intel exclusive patches that have been excluded by default
+#	Separate anything performance related into its own section
 
 version=$(cat submodules/clear/upstream | sed 's/^.*\-//g; s/\.tar\.xz//g')
 echo -e "Clear Linux's patches for $version.\n"
@@ -58,6 +61,8 @@ FPGA=$(cd submodules/clear; ls | grep 'fpga.*\.patch'; cd $OLDPWD)
 echo -e "FPGA patches\n${FPGA}\n"
 }
 
+# TODO: Combine create_fpga and cl-patches to make using this less troublesome.
+# CVE patches are excluded because of how fast they may be included in upstream
 create_fpga()
 {
 echo -e "Field-programmable gate array\nUnlikely that you have this, but adding these patches won't do any harm"
@@ -98,8 +103,8 @@ cl_distro+="*-Migrate-some-systemd-defaults-to-the-kernel-defaults.patch|"
 # > These settings are needed to prevent networking issues when the networking modules come up by default without explicit settings
 cl_distro+="*-add-scheduler-turbo3-patch.patch|"
 # Doesn't work for non CL distros
-cl_distro+="*-use-lfence-instead-of-rep-and-nop.patch|"
-# Need to determine if this is already resolved in another way/performance impact.  https://spectreattack.com/spectre.pdf https://newsroom.intel.com/wp-content/uploads/sites/11/2018/01/Intel-Analysis-of-Speculative-Execution-Side-Channels.pdf
+#cl_distro+="*-use-lfence-instead-of-rep-and-nop.patch|" ## pause does not serialize on AMD, therefore rep/nop do not either afaik
+# ~~Need to determine if this is already resolved in another way/performance impact.  https://spectreattack.com/spectre.pdf https://newsroom.intel.com/wp-content/uploads/sites/11/2018/01/Intel-Analysis-of-Speculative-Execution-Side-Channels.pdf~~
 cl_distro+="*-zero-extra-registers.patch|"
 # Requires GCC patch. https://github.com/clearlinux-pkgs/gcc/blob/master/zero-regs-gcc8.patch
 cl_distro+="*-x86-microcode-Force-update-a-uCode-even-if-the-rev-i.patch|"
