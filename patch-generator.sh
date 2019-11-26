@@ -112,10 +112,13 @@ cl_distro+="*-zero-extra-registers.patch|"
 # Requires GCC patch. https://github.com/clearlinux-pkgs/gcc/blob/master/zero-regs-gcc8.patch
 cl_distro+="*-x86-microcode-Force-update-a-uCode-even-if-the-rev-i.patch|"
 # Intel specific? Unsure of the need for this.
-cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch"
+cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch|"
 # Same as above.
-#cl_distro+="*-add-workaround-for-binutils-optimization.patch"
+cl_distro+="*-staging-exfat-add-exfat-filesystem-code-to-staging.patch|"
+# I haven't looked into it but I think this has been upstreamed already
+cl_distro+="*-add-workaround-for-binutils-optimization.patch"
 # x86_64-pc-linux-gnu/bin/as: unrecognized option '-mbranches-within-no-boundaries'
+# Patches to recompile binutils with here: https://github.com/clearlinux-pkgs/binutils
 
 CLEAR=($(cd submodules/clear; ls !(${cl_distro}) | grep -v 'fpga\|^CVE\|.*patch\-\|perfbias' | grep '^.*\.patch'; cd $OLDPWD))
 echo -e "Clear Linux patches"
