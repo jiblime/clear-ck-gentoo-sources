@@ -1,6 +1,7 @@
 .series
-0001-CL-CVE.patch
-0002-CL-FPGA.patch
-0003-CL-CLR.patch
-clear.patch
-zenpower.potch
+submodules/.zenpower-skel/zenpower.potch
+submodules/.generated/0001-CL-CVE.patch
+submodules/.generated/0002-CL-FPGA.patch
+submodules/.generated/0003-CL-CLR.patch
+submodules/.generated/clear.patch
+

@@ -1,6 +1,9 @@
 #!/bin/bash
 
-git submodule update --init
+update_mods() {
+	git submodule foreach "git fetch ; git checkout"
+}
+update_mods
 
 # This initial section is a hack into getting the master tree of zenpower.git's zenpower.c file catted onto a patch
 # because I am lazy. It will probably break in the future unless you opt to pick a tag first prior to running this.
@@ -109,9 +112,9 @@ cl_distro+="*-zero-extra-registers.patch|"
 # Requires GCC patch. https://github.com/clearlinux-pkgs/gcc/blob/master/zero-regs-gcc8.patch
 cl_distro+="*-x86-microcode-Force-update-a-uCode-even-if-the-rev-i.patch|"
 # Intel specific? Unsure of the need for this.
-cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch|"
+cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch"
 # Same as above.
-cl_distro+="*-add-workaround-for-binutils-optimization.patch"
+#cl_distro+="*-add-workaround-for-binutils-optimization.patch"
 # x86_64-pc-linux-gnu/bin/as: unrecognized option '-mbranches-within-no-boundaries'
 
 CLEAR=($(cd submodules/clear; ls !(${cl_distro}) | grep -v 'fpga\|^CVE\|.*patch\-\|perfbias' | grep '^.*\.patch'; cd $OLDPWD))
