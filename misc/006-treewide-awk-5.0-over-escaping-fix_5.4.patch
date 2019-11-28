@@ -1,0 +1,83 @@
+diff --git a/Documentation/arm/samsung/clksrc-change-registers.awk b/Documentation/arm/samsung/clksrc-change-registers.awk
+index 7be1b8aa7..d853f750c 100755
+--- a/Documentation/arm/samsung/clksrc-change-registers.awk
++++ b/Documentation/arm/samsung/clksrc-change-registers.awk
+@@ -67,7 +67,7 @@ BEGIN {
+ # to replace and create an associative array of values
+ 
+     while (getline line < ARGV[1] > 0) {
+-	if (line ~ /\#define.*_MASK/ &&
++	if (line ~ /#define.*_MASK/ &&
+ 	    !(line ~ /USB_SIG_MASK/)) {
+ 	    splitdefine(line, fields)
+ 	    name = fields[0]
+diff --git a/arch/x86/tools/gen-insn-attr-x86.awk b/arch/x86/tools/gen-insn-attr-x86.awk
+index b02a36b2c..a42015b30 100644
+--- a/arch/x86/tools/gen-insn-attr-x86.awk
++++ b/arch/x86/tools/gen-insn-attr-x86.awk
+@@ -69,7 +69,7 @@ BEGIN {
+ 
+ 	lprefix1_expr = "\\((66|!F3)\\)"
+ 	lprefix2_expr = "\\(F3\\)"
+-	lprefix3_expr = "\\((F2|!F3|66\\&F2)\\)"
++	lprefix3_expr = "\\((F2|!F3|66&F2)\\)"
+ 	lprefix_expr = "\\((66|F2|F3)\\)"
+ 	max_lprefix = 4
+ 
+@@ -257,7 +257,7 @@ function convert_operands(count,opnd,       i,j,imm,mod)
+ 	return add_flags(imm, mod)
+ }
+ 
+-/^[0-9a-f]+\:/ {
++/^[0-9a-f]+:/ {
+ 	if (NR == 1)
+ 		next
+ 	# get index
+diff --git a/lib/raid6/unroll.awk b/lib/raid6/unroll.awk
+index c6aa03631..0809805a7 100644
+--- a/lib/raid6/unroll.awk
++++ b/lib/raid6/unroll.awk
+@@ -13,7 +13,7 @@ BEGIN {
+ 	for (i = 0; i < rep; ++i) {
+ 		tmp = $0
+ 		gsub(/\$\$/, i, tmp)
+-		gsub(/\$\#/, n, tmp)
++		gsub(/\$#/, n, tmp)
+ 		gsub(/\$\*/, "$", tmp)
+ 		print tmp
+ 	}
+diff --git a/tools/arch/x86/tools/gen-insn-attr-x86.awk b/tools/arch/x86/tools/gen-insn-attr-x86.awk
+index b02a36b2c..a42015b30 100644
+--- a/tools/arch/x86/tools/gen-insn-attr-x86.awk
++++ b/tools/arch/x86/tools/gen-insn-attr-x86.awk
+@@ -69,7 +69,7 @@ BEGIN {
+ 
+ 	lprefix1_expr = "\\((66|!F3)\\)"
+ 	lprefix2_expr = "\\(F3\\)"
+-	lprefix3_expr = "\\((F2|!F3|66\\&F2)\\)"
++	lprefix3_expr = "\\((F2|!F3|66&F2)\\)"
+ 	lprefix_expr = "\\((66|F2|F3)\\)"
+ 	max_lprefix = 4
+ 
+@@ -257,7 +257,7 @@ function convert_operands(count,opnd,       i,j,imm,mod)
+ 	return add_flags(imm, mod)
+ }
+ 
+-/^[0-9a-f]+\:/ {
++/^[0-9a-f]+:/ {
+ 	if (NR == 1)
+ 		next
+ 	# get index
+diff --git a/tools/perf/arch/x86/tests/gen-insn-x86-dat.awk b/tools/perf/arch/x86/tests/gen-insn-x86-dat.awk
+index 1a29f6379..b44a8d74d 100644
+--- a/tools/perf/arch/x86/tests/gen-insn-x86-dat.awk
++++ b/tools/perf/arch/x86/tests/gen-insn-x86-dat.awk
+@@ -24,7 +24,7 @@ BEGIN {
+ 	going = 0
+ }
+ 
+-/^\s*[0-9a-fA-F]+\:/ {
++/^\s*[0-9a-fA-F]+:/ {
+ 	if (going) {
+ 		colon_pos = index($0, ":")
+ 		useful_line = substr($0, colon_pos + 1)

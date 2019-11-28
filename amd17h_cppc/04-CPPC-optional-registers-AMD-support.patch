@@ -1,0 +1,134 @@
+diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
+index c13dacea4a8b..b24e54263efb 100644
+--- a/drivers/acpi/cppc_acpi.c
++++ b/drivers/acpi/cppc_acpi.c
+@@ -1367,6 +1367,18 @@ int cppc_set_reg(int cpu, struct cppc_perf_ctrls *perf_ctrls,
+ 	case DESIRED_PERF:
+ 		value = perf_ctrls->desired_perf;
+ 		break;
++	case MAX_PERF:
++		value = perf_ctrls->max_perf;
++		break;
++	case MIN_PERF:
++		value = perf_ctrls->min_perf;
++		break;
++	case ENERGY_PERF:
++		value = perf_ctrls->energy_perf;
++		break;
++	case AUTO_SEL_ENABLE:
++		value = perf_ctrls->auto_sel_enable;
++		break;
+ 	default:
+ 		pr_debug("CPC register index #%d not writeable\n", reg_idx);
+ 		return -EINVAL;
+@@ -1404,11 +1416,8 @@ int cppc_set_reg(int cpu, struct cppc_perf_ctrls *perf_ctrls,
+ 		cpc_desc->write_cmd_status = 0;
+ 	}
+ 
+-	/*
+-	 * Skip writing MIN/MAX until Linux knows how to come up with
+-	 * useful values.
+-	 */
+-	cpc_write(cpu, reg, value);
++	if (CPC_SUPPORTED(reg))
++		cpc_write(cpu, reg, value);
+ 
+ 	if (CPC_IN_PCC(reg))
+ 		up_read(&pcc_ss_data->pcc_lock);	/* END Phase-I */
+@@ -1476,6 +1485,75 @@ int cppc_set_reg(int cpu, struct cppc_perf_ctrls *perf_ctrls,
+ }
+ EXPORT_SYMBOL_GPL(cppc_set_reg);
+ 
++int cppc_get_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls)
++{
++	struct cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpu);
++	struct cpc_register_resource *desired_reg, *max_reg, *min_reg;
++	struct cpc_register_resource *energy_reg, *auto_sel_enable_reg;
++	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
++	u64 desired, max, min, energy, auto_sel_enable;
++	struct cppc_pcc_data *pcc_ss_data = NULL;
++	int ret = 0, regs_in_pcc = 0;
++
++	if (!cpc_desc) {
++		pr_debug("No CPC descriptor for CPU: %d\n", cpu);
++		return -ENODEV;
++	}
++
++	desired_reg = &cpc_desc->cpc_regs[DESIRED_PERF];
++	max_reg = &cpc_desc->cpc_regs[MAX_PERF];
++	min_reg = &cpc_desc->cpc_regs[MIN_PERF];
++	energy_reg = &cpc_desc->cpc_regs[ENERGY_PERF];
++	auto_sel_enable_reg = &cpc_desc->cpc_regs[AUTO_SEL_ENABLE];
++
++	/* Check if any of the perf registers are in PCC */
++	if (CPC_IN_PCC(desired_reg) || CPC_IN_PCC(max_reg) ||
++	    CPC_IN_PCC(min_reg) || CPC_IN_PCC(energy_reg) ||
++	    CPC_IN_PCC(auto_sel_enable_reg)) {
++		pcc_ss_data = pcc_data[pcc_ss_id];
++		down_write(&pcc_ss_data->pcc_lock);
++		regs_in_pcc = 1;
++
++		/*Ring doorbell once to update PCC subspace */
++		if (send_pcc_cmd(pcc_ss_id, CMD_READ) < 0) {
++			ret = -EIO;
++			goto out_err;
++		}
++	}
++
++	/* desired_perf is the only mandatory value in perf_ctrls */
++	if (cpc_read(cpu, desired_reg, &desired))
++		ret = -EFAULT;
++
++	if (CPC_SUP_BUFFER_ONLY(max_reg) && cpc_read(cpu, max_reg, &max))
++		ret = -EFAULT;
++
++	if (CPC_SUP_BUFFER_ONLY(min_reg) && cpc_read(cpu, min_reg, &min))
++		ret = -EFAULT;
++
++	if (CPC_SUP_BUFFER_ONLY(energy_reg) &&
++	    cpc_read(cpu, energy_reg, &energy))
++		ret = -EFAULT;
++
++	if (CPC_SUPPORTED(auto_sel_enable_reg) &&
++	    cpc_read(cpu, auto_sel_enable_reg, &auto_sel_enable))
++		ret = -EFAULT;
++
++	if (!ret) {
++		perf_ctrls->desired_perf = desired;
++		perf_ctrls->max_perf = max;
++		perf_ctrls->min_perf = min;
++		perf_ctrls->energy_perf = energy;
++		perf_ctrls->auto_sel_enable = auto_sel_enable;
++	}
++
++out_err:
++	if (regs_in_pcc)
++		up_write(&pcc_ss_data->pcc_lock);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(cppc_get_perf);
++
+ /**
+  * cppc_get_transition_latency - returns frequency transition latency in ns
+  *
+diff --git a/include/acpi/cppc_acpi.h b/include/acpi/cppc_acpi.h
+index f229e903525d..80720b246c51 100644
+--- a/include/acpi/cppc_acpi.h
++++ b/include/acpi/cppc_acpi.h
+@@ -113,6 +113,8 @@ struct cppc_perf_ctrls {
+ 	u32 max_perf;
+ 	u32 min_perf;
+ 	u32 desired_perf;
++	u32 auto_sel_enable;
++	u32 energy_perf;
+ };
+ 
+ struct cppc_perf_fb_ctrs {
+@@ -136,6 +138,7 @@ struct cppc_cpudata {
+ extern int cppc_get_desired_perf(int cpunum, u64 *desired_perf);
+ extern int cppc_get_perf_ctrs(int cpu, struct cppc_perf_fb_ctrs *perf_fb_ctrs);
+ extern int cppc_set_reg(int cpu, struct cppc_perf_ctrls *perf_ctrls, enum cppc_regs reg_idx);
++extern int cppc_get_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls);
+ extern int cppc_get_perf_caps(int cpu, struct cppc_perf_caps *caps);
+ extern int acpi_get_psd_map(struct cppc_cpudata **);
+ extern unsigned int cppc_get_transition_latency(int cpu);

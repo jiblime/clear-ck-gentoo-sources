@@ -1,0 +1,146 @@
+diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
+index 53a9dc9960b6..c13dacea4a8b 100644
+--- a/drivers/acpi/cppc_acpi.c
++++ b/drivers/acpi/cppc_acpi.c
+@@ -56,7 +56,7 @@ struct cppc_pcc_data {
+ 	/*
+ 	 * Lock to provide controlled access to the PCC channel.
+ 	 *
+-	 * For performance critical usecases(currently cppc_set_perf)
++	 * For performance-critical usecases(currently cppc_set_reg)
+ 	 *	We need to take read_lock and check if channel belongs to OSPM
+ 	 * before reading or writing to PCC subspace
+ 	 *	We need to take write_lock before transferring the channel
+@@ -1341,26 +1341,38 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
+ EXPORT_SYMBOL_GPL(cppc_get_perf_ctrs);
+ 
+ /**
+- * cppc_set_perf - Set a CPU's performance controls.
+- * @cpu: CPU for which to set performance controls.
++ * cppc_set_reg - Set the CPUs control register.
++ * @cpu: CPU for which to set the register.
+  * @perf_ctrls: ptr to cppc_perf_ctrls. See cppc_acpi.h
++ * @reg_idx: Index of the register being accessed
+  *
+  * Return: 0 for success, -ERRNO otherwise.
+  */
+-int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls)
++int cppc_set_reg(int cpu, struct cppc_perf_ctrls *perf_ctrls,
++		 enum cppc_regs reg_idx)
+ {
+ 	struct cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpu);
+-	struct cpc_register_resource *desired_reg;
+ 	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
+ 	struct cppc_pcc_data *pcc_ss_data = NULL;
++	struct cpc_register_resource *reg;
+ 	int ret = 0;
++	u32 value;
+ 
+ 	if (!cpc_desc) {
+ 		pr_debug("No CPC descriptor for CPU:%d\n", cpu);
+ 		return -ENODEV;
+ 	}
+ 
+-	desired_reg = &cpc_desc->cpc_regs[DESIRED_PERF];
++	switch (reg_idx) {
++	case DESIRED_PERF:
++		value = perf_ctrls->desired_perf;
++		break;
++	default:
++		pr_debug("CPC register index #%d not writeable\n", reg_idx);
++		return -EINVAL;
++	}
++
++	reg = &cpc_desc->cpc_regs[reg_idx];
+ 
+ 	/*
+ 	 * This is Phase-I where we want to write to CPC registers
+@@ -1369,7 +1381,7 @@ int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls)
+ 	 * Since read_lock can be acquired by multiple CPUs simultaneously we
+ 	 * achieve that goal here
+ 	 */
+-	if (CPC_IN_PCC(desired_reg)) {
++	if (CPC_IN_PCC(reg)) {
+ 		if (pcc_ss_id < 0) {
+ 			pr_debug("Invalid pcc_ss_id\n");
+ 			return -ENODEV;
+@@ -1396,14 +1408,14 @@ int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls)
+ 	 * Skip writing MIN/MAX until Linux knows how to come up with
+ 	 * useful values.
+ 	 */
+-	cpc_write(cpu, desired_reg, perf_ctrls->desired_perf);
++	cpc_write(cpu, reg, value);
+ 
+-	if (CPC_IN_PCC(desired_reg))
++	if (CPC_IN_PCC(reg))
+ 		up_read(&pcc_ss_data->pcc_lock);	/* END Phase-I */
+ 	/*
+ 	 * This is Phase-II where we transfer the ownership of PCC to Platform
+ 	 *
+-	 * Short Summary: Basically if we think of a group of cppc_set_perf
++	 * Short Summary: Basically if we think of a group of cppc_set_reg
+ 	 * requests that happened in short overlapping interval. The last CPU to
+ 	 * come out of Phase-I will enter Phase-II and ring the doorbell.
+ 	 *
+@@ -1446,7 +1458,7 @@ int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls)
+ 	 * case during a CMD_READ and if there are pending writes it delivers
+ 	 * the write command before servicing the read command
+ 	 */
+-	if (CPC_IN_PCC(desired_reg)) {
++	if (CPC_IN_PCC(reg)) {
+ 		if (down_write_trylock(&pcc_ss_data->pcc_lock)) {/* BEGIN Phase-II */
+ 			/* Update only if there are pending write commands */
+ 			if (pcc_ss_data->pending_pcc_write_cmd)
+@@ -1462,7 +1474,7 @@ int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls)
+ 	}
+ 	return ret;
+ }
+-EXPORT_SYMBOL_GPL(cppc_set_perf);
++EXPORT_SYMBOL_GPL(cppc_set_reg);
+ 
+ /**
+  * cppc_get_transition_latency - returns frequency transition latency in ns
+diff --git a/drivers/cpufreq/cppc_cpufreq.c b/drivers/cpufreq/cppc_cpufreq.c
+index 8d8da763adc5..81e9dff03c92 100644
+--- a/drivers/cpufreq/cppc_cpufreq.c
++++ b/drivers/cpufreq/cppc_cpufreq.c
+@@ -207,7 +207,7 @@ static int cppc_cpufreq_set_target(struct cpufreq_policy *policy,
+ 	freqs.new = target_freq;
+ 
+ 	cpufreq_freq_transition_begin(policy, &freqs);
+-	ret = cppc_set_perf(cpu->cpu, &cpu->perf_ctrls);
++	ret = cppc_set_reg(cpu->cpu, &cpu->perf_ctrls, DESIRED_PERF);
+ 	cpufreq_freq_transition_end(policy, &freqs, ret != 0);
+ 
+ 	if (ret)
+@@ -231,7 +231,7 @@ static void cppc_cpufreq_stop_cpu(struct cpufreq_policy *policy)
+ 
+ 	cpu->perf_ctrls.desired_perf = cpu->perf_caps.lowest_perf;
+ 
+-	ret = cppc_set_perf(cpu_num, &cpu->perf_ctrls);
++	ret = cppc_set_reg(cpu_num, &cpu->perf_ctrls, DESIRED_PERF);
+ 	if (ret)
+ 		pr_debug("Err setting perf value:%d on CPU:%d. ret:%d\n",
+ 				cpu->perf_caps.lowest_perf, cpu_num, ret);
+@@ -344,7 +344,7 @@ static int cppc_cpufreq_cpu_init(struct cpufreq_policy *policy)
+ 					cpu->perf_caps.highest_perf);
+ 	cpu->perf_ctrls.desired_perf = cpu->perf_caps.highest_perf;
+ 
+-	ret = cppc_set_perf(cpu_num, &cpu->perf_ctrls);
++	ret = cppc_set_reg(cpu_num, &cpu->perf_ctrls, DESIRED_PERF);
+ 	if (ret)
+ 		pr_debug("Err setting perf value:%d on CPU:%d. ret:%d\n",
+ 				cpu->perf_caps.highest_perf, cpu_num, ret);
+diff --git a/include/acpi/cppc_acpi.h b/include/acpi/cppc_acpi.h
+index a6a9373ab863..f229e903525d 100644
+--- a/include/acpi/cppc_acpi.h
++++ b/include/acpi/cppc_acpi.h
+@@ -135,7 +135,7 @@ struct cppc_cpudata {
+ 
+ extern int cppc_get_desired_perf(int cpunum, u64 *desired_perf);
+ extern int cppc_get_perf_ctrs(int cpu, struct cppc_perf_fb_ctrs *perf_fb_ctrs);
+-extern int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls);
++extern int cppc_set_reg(int cpu, struct cppc_perf_ctrls *perf_ctrls, enum cppc_regs reg_idx);
+ extern int cppc_get_perf_caps(int cpu, struct cppc_perf_caps *caps);
+ extern int acpi_get_psd_map(struct cppc_cpudata **);
+ extern unsigned int cppc_get_transition_latency(int cpu);

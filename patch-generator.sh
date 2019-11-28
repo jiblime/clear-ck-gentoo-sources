@@ -1,21 +1,20 @@
 #!/bin/bash
 
 update_mods() {
-	git submodule foreach "git fetch ; git checkout"
+	git submodule update --init
+	git submodule foreach "git fetch ; git checkout master"
 }
 update_mods
 
-# This initial section is a hack into getting the master tree of zenpower.git's zenpower.c file catted onto a patch
-# because I am lazy. It will probably break in the future unless you opt to pick a tag first prior to running this.
-# Right now, it is working on 5.2/5.3/5.4-rc8 (<=5.2 requires patches for Zen 2 processors)
+# For Ryzen 3000 voltage/temp/clock detection.
 
 if [[ -f submodules/zenpower/zenpower.c ]] ; then
-	cp submodules/.zenpower-skel/zenpower.skel misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
-	echo "@@ -0,0 +1,$(cat submodules/zenpower/zenpower.c | wc -l) @@" >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
+	cp submodules/.zenpower-skel/zenpower.skel misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
+	echo "@@ -0,0 +1,$(cat submodules/zenpower/zenpower.c | wc -l) @@" >> misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
 	cp submodules/zenpower/zenpower.c submodules/.zenpower-skel/zenpower.potch
 	sed -i 's/^/+/g' submodules/.zenpower-skel/zenpower.potch
-	cat submodules/.zenpower-skel/zenpower.potch  >> misc/Add-git-version-of-zenpower-as-a-builtin-module.patch &&
-	ls --color=always misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
+	cat submodules/.zenpower-skel/zenpower.potch  >> misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch &&
+	ls --color=always misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
 	echo -e "Created the freshest zenpower built in module available, courtesy of:"
 	echo -e "https://github.com/ocerman. Best used with https://github.com/ocerman/zenmonitor"
 	echo -e "If you do not have a Ryzen processor, disable CONFIG_SENSORS_ZENPOWER"
@@ -116,6 +115,8 @@ cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch|"
 # Same as above.
 cl_distro+="*-staging-exfat-add-exfat-filesystem-code-to-staging.patch|"
 # I haven't looked into it but I think this has been upstreamed already
+cl_distro+="*-driver-core-add-dev_groups-to-all-drivers.patch|"
+# Doesn't patch
 cl_distro+="*-add-workaround-for-binutils-optimization.patch"
 # x86_64-pc-linux-gnu/bin/as: unrecognized option '-mbranches-within-no-boundaries'
 # Patches to recompile binutils with here: https://github.com/clearlinux-pkgs/binutils

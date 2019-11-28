@@ -1,64 +1,62 @@
-ck-5.3/0001-MultiQueue-Skiplist-Scheduler-v0.195.patch
-ck-5.3/0002-Fix-Werror-build-failure-in-tools.patch
-ck-5.3/0003-Make-preemptible-kernel-default.patch
-ck-5.3/0004-Expose-vmsplit-for-our-poor-32-bit-users.patch
-ck-5.3/0005-Create-highres-timeout-variants-of-schedule_timeout-.patch
-ck-5.3/0006-Special-case-calls-of-schedule_timeout-1-to-use-the-.patch
-ck-5.3/0007-Convert-msleep-to-use-hrtimers-when-active.patch
-ck-5.3/0008-Replace-all-schedule-timeout-1-with-schedule_min_hrt.patch
-ck-5.3/0009-Replace-all-calls-to-schedule_timeout_interruptible-.patch
-ck-5.3/0010-Replace-all-calls-to-schedule_timeout_uninterruptibl.patch
-ck-5.3/0011-Don-t-use-hrtimer-overlay-when-pm_freezing-since-som.patch
-ck-5.3/0012-Make-hrtimer-granularity-and-minimum-hrtimeout-confi.patch
-ck-5.3/0013-Make-threaded-IRQs-optionally-the-default-which-can-.patch
-ck-5.3/0014-Reinstate-default-Hz-of-100-in-combination-with-MuQS.patch
-ck-5.3/0015-Swap-sucks.patch
-ck-5.3/0016-Make-nohz_full-not-be-picked-up-as-a-default-config-.patch
-ck-5.3/0017-Add-ck1-version_ADJUSTED.patch # Portage doesn't detect EXTRAVERSION correctly
+# Reordered to aid in incremental patching with regards to the kernel itself, Clear Linux, and zenpower
+# Patches not appended with _5.4 in misc likely will not require to be changed on new kernel released
+
+ck-5.4/0001-MultiQueue-Skiplist-Scheduler-v0.196.patch
+ck-5.4/0002-Make-preemptible-kernel-default.patch
+ck-5.4/0003-Expose-vmsplit-for-our-poor-32-bit-users.patch
+ck-5.4/0004-Create-highres-timeout-variants-of-schedule_timeout-.patch
+ck-5.4/0005-Special-case-calls-of-schedule_timeout-1-to-use-the-.patch
+ck-5.4/0006-Convert-msleep-to-use-hrtimers-when-active.patch
+ck-5.4/0007-Replace-all-schedule-timeout-1-with-schedule_min_hrt.patch
+ck-5.4/0008-Replace-all-calls-to-schedule_timeout_interruptible-.patch
+ck-5.4/0009-Replace-all-calls-to-schedule_timeout_uninterruptibl.patch
+ck-5.4/0010-Don-t-use-hrtimer-overlay-when-pm_freezing-since-som.patch
+ck-5.4/0011-Make-hrtimer-granularity-and-minimum-hrtimeout-confi.patch
+ck-5.4/0012-Make-threaded-IRQs-optionally-the-default-which-can-.patch
+ck-5.4/0013-Reinstate-default-Hz-of-100-in-combination-with-MuQS.patch
+ck-5.4/0014-Swap-sucks.patch
+ck-5.4/0015-Make-nohz_full-not-be-picked-up-as-a-default-config-.patch
+ck-5.4/0016-Add-ck1-version.adjusted.patch # Portage incorrectly identifies kernel with the original version
+
+amd17h_cppc/01-CPPC-optional-registers-AMD-support.patch
+amd17h_cppc/02-CPPC-optional-registers-AMD-support.patch
+amd17h_cppc/03-CPPC-optional-registers-AMD-support.patch
+amd17h_cppc/04-CPPC-optional-registers-AMD-support.patch
+amd17h_cppc/05-CPPC-optional-registers-AMD-support.patch
+amd17h_cppc/06-CPPC-optional-registers-AMD-support.patch
+# amd17h_cppc/README - 17h and newer AMD processors support ACPI v6.1, these patches add new functionality
+# Collaborative Processor Performance Control - https://www.kernel.org/doc/html/latest/admin-guide/acpi/cppc_sysfs.html
+
+genpatches/1500_XATTR_USER_PREFIX.patch
+genpatches/1510_fs-enable-link-security-restrictions-by-default.patch
+genpatches/2000_BT-Check-key-sizes-only-if-Secure-Simple-Pairing-enabled.patch
+genpatches/2500_usb-storage-Disable-UAS-on-JMicron-SATA-enclosure.patch
+genpatches/2600_enable-key-swapping-for-apple-mac.patch
+genpatches/4567_distro-Gentoo-Kconfig.patch
+
+misc/000-experimental-x86-64-opts.patch
+# Enables native -O3 compilation support, switched 32bit arch fromo i386 to i686
+
+misc/001-iwd-rfkill_5.4.patch
+# Fixes issue with rfkill breaking iwd
+
+misc/002-enable_additional_cpu_optimizations_for_gcc_v9.1+_kernel_v4.13+.patch
+# Enables build optimization
+
+misc/003-better-it87-detection_5.4.patch
+# ITE chip support, but better
+
+misc/004-async-futex1_5.4.patch
+# Asynchronous futex part 1, for Wine
+
+misc/005-async-futex2_5.4.patch
+# Asynchronous futex part 2
+
+misc/006-treewide-awk-5.0-over-escaping-fix_5.4.patch
+# Removes unneeded escaping for awk >=5.0
+
+misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
+# Builds a master branch version of a user maintained module for Ryzen processors in kernel
 
 submodules/.generated/clear.patch
-
-misc/0003-v5.3_turbosched-v4.patch
-# Read patch header for more info
-# https://github.com/Tk-Glitch/PKGBUILDS/blob/master/linux53-tkg/linux53-tkg-patches/0003-v5.3_turbosched-v4.patch#L4
-
-misc/0007-v5.3-fsync.patch
-# Read patch header for more info
-# https://github.com/Tk-Glitch/PKGBUILDS/blob/master/linux53-tkg/linux53-tkg-patches/0007-v5.3-fsync.patch
-
-misc/Add-git-version-of-zenpower-as-a-builtin-module.patch
-# misc/Added-zenpower-0.1.4-as-a-module-for-extra-Ryzen-sen.patch You can use this version instead since it is known to work. Make sure to rename the *nopatch to patch and comment out the above
-# Add zenpower as a built-in module instead of using DKMS or @module-rebuild to make it.
-
-misc/amd-iommu-fix.patch
-# Read patch header for more info | Does this work?
-
-misc/enable_additional_cpu_optimizations_for_gcc_v9.1+_kernel_v4.13+.patch
-# graysky2's arch specific tunables
-# https://github.com/graysky2/kernel_gcc_patch
-
-misc/fix-systemd-detect-virt.patch
-# Fixes systemd-detect-virt in kernels built with the ck patchset
-# https://github.com/ckolivas/linux/pull/17/commits/3d6e52f1415a5bcdc6b06f10f9a48388597fcd60
-
-misc/gentoo-flavor-5.3.patch
-# 1500_XATTR_USER_PREFIX.patch
-# 1510_fs-enable-link-security-restrictions-by-default.patch
-# 2000_BT-Check-key-sizes-only-if-Secure-Simple-Pairing-enabled.patch
-# 2500_usb-storage-Disable-UAS-on-JMicron-SATA-enclosure.patch
-# 2600_enable-key-swapping-for-apple-mac.patch
-# 4567_distro-Gentoo-Kconfig.patch
-
-misc/iwd-rfkill.patch
-# Supposed to fix issues with Intel's iwd
-
-misc/Replaced-drivers-hwmon-it87.c.patch
-# Replaced the in-kernel it87 with a much better version
-# https://github.com/herocodemaster/it87 | This is a mirror
-
-misc/treewide-fix-awk-regexp-over-escaping.patch
-# Fixes issues wih building the kernel with gawk >=5.0
-# https://lkml.org/lkml/2019/5/18/223
-
-5.3.0-5.3.10.patch
-# Bump it!
+# Clear Linux patches. Use patch-generator.sh for this and the above. The 5.4 release already has the wifi CVEs
