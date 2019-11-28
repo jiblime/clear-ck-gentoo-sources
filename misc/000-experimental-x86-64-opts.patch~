@@ -45,11 +45,11 @@
 
 ---
 
-Index: linux/arch/x86/Makefile
-===================================================================
---- linux.orig/arch/x86/Makefile
-+++ linux/arch/x86/Makefile
-@@ -22,7 +22,7 @@ else ifneq ($(call cc-option, -mstack-al
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index 94df08688..5a33a5f13 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -22,7 +22,7 @@ else ifneq ($(call cc-option, -mstack-alignment=16),)
        cc_stack_align8 := -mstack-alignment=8
  endif
  
@@ -58,7 +58,7 @@ Index: linux/arch/x86/Makefile
  # that way we can complain to the user if the CPU is insufficient.
  #
  # The -m16 option is supported by GCC >= 4.9 and clang >= 3.5. For
-@@ -32,7 +32,7 @@ CODE16GCC_CFLAGS := -m32 -Wa,$(srctree)/
+@@ -32,7 +32,7 @@ CODE16GCC_CFLAGS := -m32 -Wa,$(srctree)/arch/x86/boot/code16gcc.h
  M16_CFLAGS	 := $(call cc-option, -m16, $(CODE16GCC_CFLAGS))
  
  REALMODE_CFLAGS	:= $(M16_CFLAGS) -g -Os -DDISABLE_BRANCH_PROFILING \
@@ -67,7 +67,7 @@ Index: linux/arch/x86/Makefile
  		   -fno-strict-aliasing -fomit-frame-pointer -fno-pic \
  		   -mno-mmx -mno-sse
  
-@@ -63,8 +63,8 @@ KBUILD_CFLAGS += $(call cc-option,-mno-a
+@@ -63,8 +63,8 @@ KBUILD_CFLAGS += $(call cc-option,-mno-avx,)
  
  ifeq ($(CONFIG_X86_32),y)
          BITS := 32
@@ -87,3 +87,13 @@ Index: linux/arch/x86/Makefile
  
          # Don't autogenerate traditional x87 instructions
          KBUILD_CFLAGS += $(call cc-option,-mno-80387)
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1244,7 +1244,6 @@
+ 
+ config CC_OPTIMIZE_FOR_PERFORMANCE_O3
+ 	bool "Optimize more for performance (-O3)"
+-	depends on ARC
+ 	imply CC_DISABLE_WARN_MAYBE_UNINITIALIZED  # avoid false positives
+ 	help
+ 	  Choosing this option will pass "-O3" to your compiler to optimize

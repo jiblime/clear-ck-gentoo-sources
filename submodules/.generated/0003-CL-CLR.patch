@@ -1,4 +1,4 @@
-User generated at: Thu 28 Nov 2019 03:25:46 AM PST
+User generated at: Sat 14 Dec 2019 02:30:26 PM PST
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Tue, 23 Jun 2015 01:26:52 -0500
@@ -13,10 +13,10 @@ Signed-off-by: Jose Carlos Venegas Munoz <jos.c.venegas.munoz@intel.com>
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/input/serio/i8042.c b/drivers/input/serio/i8042.c
-index b695094290ab..8071cd0b2c40 100644
+index 20ff2bed3917..9716c549a76b 100644
 --- a/drivers/input/serio/i8042.c
 +++ b/drivers/input/serio/i8042.c
-@@ -597,7 +597,7 @@ static int i8042_enable_kbd_port(void)
+@@ -611,7 +611,7 @@ static int i8042_enable_kbd_port(void)
  	if (i8042_command(&i8042_ctr, I8042_CMD_CTL_WCTR)) {
  		i8042_ctr &= ~I8042_CTR_KBDINT;
  		i8042_ctr |= I8042_CTR_KBDDIS;
@@ -25,7 +25,7 @@ index b695094290ab..8071cd0b2c40 100644
  		return -EIO;
  	}
  
-@@ -616,7 +616,7 @@ static int i8042_enable_aux_port(void)
+@@ -630,7 +630,7 @@ static int i8042_enable_aux_port(void)
  	if (i8042_command(&i8042_ctr, I8042_CMD_CTL_WCTR)) {
  		i8042_ctr &= ~I8042_CTR_AUXINT;
  		i8042_ctr |= I8042_CTR_AUXDIS;
@@ -34,7 +34,7 @@ index b695094290ab..8071cd0b2c40 100644
  		return -EIO;
  	}
  
-@@ -708,7 +708,7 @@ static int __init i8042_check_mux(void)
+@@ -722,7 +722,7 @@ static int __init i8042_check_mux(void)
  	i8042_ctr &= ~I8042_CTR_AUXINT;
  
  	if (i8042_command(&i8042_ctr, I8042_CMD_CTL_WCTR)) {
@@ -43,7 +43,7 @@ index b695094290ab..8071cd0b2c40 100644
  		return -EIO;
  	}
  
-@@ -931,7 +931,7 @@ static int i8042_controller_selftest(void)
+@@ -945,7 +945,7 @@ static int i8042_controller_selftest(void)
  	do {
  
  		if (i8042_command(&param, I8042_CMD_CTL_TEST)) {
@@ -52,7 +52,7 @@ index b695094290ab..8071cd0b2c40 100644
  			return -ENODEV;
  		}
  
-@@ -953,7 +953,7 @@ static int i8042_controller_selftest(void)
+@@ -967,7 +967,7 @@ static int i8042_controller_selftest(void)
  	pr_info("giving up on controller selftest, continuing anyway...\n");
  	return 0;
  #else
@@ -74,7 +74,7 @@ Subject: [PATCH] silence rapl
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/powercap/intel_rapl_common.c b/drivers/powercap/intel_rapl_common.c
-index 6df481896b5f..7ce4268b6e2d 100644
+index 94ddd7d659c8..8c5a87f5f966 100644
 --- a/drivers/powercap/intel_rapl_common.c
 +++ b/drivers/powercap/intel_rapl_common.c
 @@ -1419,7 +1419,7 @@ static int __init rapl_init(void)
@@ -101,7 +101,7 @@ boards (sadly, too many of them) in laptops.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
-index 1b27b5af3d55..6df75f4c1a2e 100644
+index a97e2571a527..772e8935aa60 100644
 --- a/drivers/pci/pci.c
 +++ b/drivers/pci/pci.c
 @@ -61,7 +61,7 @@ struct pci_pme_device {
@@ -131,7 +131,7 @@ Signed-off-by: Arjan van de Ven <arjan@linux.intel.com>
  2 files changed, 9 insertions(+), 4 deletions(-)
 
 diff --git a/kernel/watchdog.c b/kernel/watchdog.c
-index 7f9e7b9306fe..cb2afbda5da4 100644
+index f41334ef0971..eb49c42f215b 100644
 --- a/kernel/watchdog.c
 +++ b/kernel/watchdog.c
 @@ -41,7 +41,7 @@ unsigned long __read_mostly watchdog_enabled;
@@ -144,10 +144,10 @@ index 7f9e7b9306fe..cb2afbda5da4 100644
  
  static struct cpumask watchdog_allowed_mask __read_mostly;
 diff --git a/mm/ksm.c b/mm/ksm.c
-index 3dc4346411e4..5f4b6d59eebb 100644
+index 7905934cd3ad..9ea848346a0b 100644
 --- a/mm/ksm.c
 +++ b/mm/ksm.c
-@@ -2432,9 +2432,14 @@ static int ksm_scan_thread(void *nothing)
+@@ -2414,9 +2414,14 @@ static int ksm_scan_thread(void *nothing)
  
  		if (ksmd_should_run()) {
  			sleep_ms = READ_ONCE(ksm_thread_sleep_millisecs);
@@ -184,7 +184,7 @@ performance while keeping power efficiency
  1 file changed, 22 insertions(+), 22 deletions(-)
 
 diff --git a/drivers/idle/intel_idle.c b/drivers/idle/intel_idle.c
-index fa5ff77b8fe4..5da118b0b98b 100644
+index 347b08b56042..31772dd98192 100644
 --- a/drivers/idle/intel_idle.c
 +++ b/drivers/idle/intel_idle.c
 @@ -454,7 +454,7 @@ static struct cpuidle_state hsw_cstates[] = {
@@ -400,10 +400,10 @@ saves 200ms+ of boot time.
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/x86/kernel/tsc.c b/arch/x86/kernel/tsc.c
-index 57d87f79558f..cc089f651b73 100644
+index 7e322e2daaf5..bb2c9b5eed71 100644
 --- a/arch/x86/kernel/tsc.c
 +++ b/arch/x86/kernel/tsc.c
-@@ -1525,6 +1525,9 @@ unsigned long calibrate_delay_is_known(void)
+@@ -1528,6 +1528,9 @@ unsigned long calibrate_delay_is_known(void)
  	if (!constant_tsc || !mask)
  		return 0;
  
@@ -436,7 +436,7 @@ Signed-off-by: Jim Kukunas <james.t.kukunas@linux.intel.com>
  create mode 100644 lib/raid6/Kconfig
 
 diff --git a/lib/Kconfig b/lib/Kconfig
-index 4e6b1c3e4c98..b19dbca112a9 100644
+index 3321d04dfa5a..e4343fa05964 100644
 --- a/lib/Kconfig
 +++ b/lib/Kconfig
 @@ -8,8 +8,7 @@ config BINARY_PRINTF
@@ -585,7 +585,7 @@ in parallel
  1 file changed, 8 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/Makefile b/drivers/Makefile
-index 6d37564e783c..79a802e75c72 100644
+index aaef17cc6512..d08f3a394929 100644
 --- a/drivers/Makefile
 +++ b/drivers/Makefile
 @@ -58,15 +58,8 @@ obj-y				+= char/
@@ -637,10 +637,10 @@ rdrand and rdtsc add zero entropy.
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/char/random.c b/drivers/char/random.c
-index 5d5ea4ce1442..9a55e0ca9b51 100644
+index 01b8868b9bed..8544472650ea 100644
 --- a/drivers/char/random.c
 +++ b/drivers/char/random.c
-@@ -1877,6 +1877,8 @@ static void __init init_std_data(struct entropy_store *r)
+@@ -1937,6 +1937,8 @@ static void __init init_std_data(struct entropy_store *r)
  		if (!arch_get_random_seed_long(&rv) &&
  		    !arch_get_random_long(&rv))
  			rv = random_get_entropy();
@@ -663,10 +663,10 @@ Subject: [PATCH] ipv4/tcp: allow the memory tuning for tcp to go a little
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
-index 61082065b26a..da4d1df4c37e 100644
+index d8876f0e9672..bbd15a66bf6e 100644
 --- a/net/ipv4/tcp.c
 +++ b/net/ipv4/tcp.c
-@@ -3982,8 +3982,8 @@ void __init tcp_init(void)
+@@ -4001,8 +4001,8 @@ void __init tcp_init(void)
  	tcp_init_mem();
  	/* Set per-socket limits to no more than 1/128 the pressure threshold */
  	limit = nr_free_buffer_pages() << (PAGE_SHIFT - 7);
@@ -690,7 +690,7 @@ Subject: [PATCH] kernel: time: reduce ntp wakeups
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
-index 65eb796610dc..25a9d8c6d51d 100644
+index 069ca78fb0bf..22d82f21fc2e 100644
 --- a/kernel/time/ntp.c
 +++ b/kernel/time/ntp.c
 @@ -513,7 +513,7 @@ static void sched_sync_hw_clock(struct timespec64 now,
@@ -717,10 +717,10 @@ Subject: [PATCH] print fsync count for bootchart
  3 files changed, 5 insertions(+)
 
 diff --git a/block/blk-core.c b/block/blk-core.c
-index d0cc6e14d2f0..11f5eed9bad3 100644
+index d5e668ec751b..be554fee0584 100644
 --- a/block/blk-core.c
 +++ b/block/blk-core.c
-@@ -1150,6 +1150,9 @@ blk_qc_t submit_bio(struct bio *bio)
+@@ -1168,6 +1168,9 @@ blk_qc_t submit_bio(struct bio *bio)
  			count_vm_events(PGPGIN, count);
  		}
  
@@ -731,17 +731,17 @@ index d0cc6e14d2f0..11f5eed9bad3 100644
  			char b[BDEVNAME_SIZE];
  			printk(KERN_DEBUG "%s(%d): %s block %Lu on %s (%u sectors)\n",
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 9f51932bd543..133150605925 100644
+index 775503573ed7..08eb6063db49 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -880,6 +880,7 @@ struct task_struct {
- 	struct task_cputime		cputime_expires;
- 	struct list_head		cpu_timers[3];
+@@ -881,6 +881,7 @@ struct task_struct {
+ 	/* Cached requested key. */
+ 	struct key			*cached_requested_key;
  #endif
 +	int fsync_count;
  
- 	/* Process credentials: */
- 
+ 	/*
+ 	 * executable name, excluding path.
 diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
 index f7e4579e746c..2e4e887349ff 100644
 --- a/kernel/sched/debug.c
@@ -822,7 +822,7 @@ Subject: [PATCH] use lfence instead of rep and nop
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 6e0a3b43d027..c2dab0cb2d48 100644
+index 54f5d54280f6..ee60a1f2dd11 100644
 --- a/arch/x86/include/asm/processor.h
 +++ b/arch/x86/include/asm/processor.h
 @@ -647,7 +647,7 @@ static inline unsigned int cpuid_edx(unsigned int op)
@@ -849,7 +849,7 @@ Subject: [PATCH] do accept() in LIFO order for cache efficiency
  3 files changed, 27 insertions(+), 1 deletion(-)
 
 diff --git a/include/linux/wait.h b/include/linux/wait.h
-index 30c515520fb2..42da719643a8 100644
+index 3eb7cae8206c..340ca4b81b26 100644
 --- a/include/linux/wait.h
 +++ b/include/linux/wait.h
 @@ -162,6 +162,7 @@ static inline bool wq_has_sleeper(struct wait_queue_head *wq_head)
@@ -911,7 +911,7 @@ index c1e566a114ca..5f8fca88ab23 100644
  {
  	wq_entry->flags = flags;
 diff --git a/net/ipv4/inet_connection_sock.c b/net/ipv4/inet_connection_sock.c
-index f5c163d4771b..5e06349dd0b1 100644
+index eb30fc1770de..71e8dc087870 100644
 --- a/net/ipv4/inet_connection_sock.c
 +++ b/net/ipv4/inet_connection_sock.c
 @@ -407,7 +407,7 @@ static int inet_csk_wait_for_connect(struct sock *sk, long timeo)
@@ -937,10 +937,10 @@ tweak rwsem owner spinning a bit
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/locking/rwsem.c b/kernel/locking/rwsem.c
-index bd0f0d05724c..16f51906fd99 100644
+index eef04551eae7..1ec5ab4c8ff7 100644
 --- a/kernel/locking/rwsem.c
 +++ b/kernel/locking/rwsem.c
-@@ -716,6 +716,7 @@ rwsem_spin_on_owner(struct rw_semaphore *sem, unsigned long nonspinnable)
+@@ -720,6 +720,7 @@ rwsem_spin_on_owner(struct rw_semaphore *sem, unsigned long nonspinnable)
  	struct task_struct *new, *owner;
  	unsigned long flags, new_flags;
  	enum owner_state state;
@@ -948,7 +948,7 @@ index bd0f0d05724c..16f51906fd99 100644
  
  	owner = rwsem_owner_flags(sem, &flags);
  	state = rwsem_owner_state(owner, flags, nonspinnable);
-@@ -748,7 +749,8 @@ rwsem_spin_on_owner(struct rw_semaphore *sem, unsigned long nonspinnable)
+@@ -753,7 +754,8 @@ rwsem_spin_on_owner(struct rw_semaphore *sem, unsigned long nonspinnable)
  			break;
  		}
  
@@ -980,7 +980,7 @@ Signed-off-by: Joe Konno <joe.konno@intel.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/ata/libahci.c b/drivers/ata/libahci.c
-index e4c45d3cca79..6673a44785c0 100644
+index bff369d9a1a7..30d5784741d1 100644
 --- a/drivers/ata/libahci.c
 +++ b/drivers/ata/libahci.c
 @@ -33,14 +33,14 @@
@@ -1043,7 +1043,7 @@ If force_ucode_load==true, reload ucode even if revision # is identical.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/cpu/microcode/intel.c b/arch/x86/kernel/cpu/microcode/intel.c
-index 5c67ac0..2ca566b 100644
+index 5c67ac023f4a..2ca566bedfc8 100644
 --- a/arch/x86/kernel/cpu/microcode/intel.c
 +++ b/arch/x86/kernel/cpu/microcode/intel.c
 @@ -865,7 +865,7 @@ static enum ucode_state apply_microcode_intel(int cpu)
@@ -1060,66 +1060,6 @@ https://clearlinux.org
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
-Date: Wed, 6 Nov 2019 04:03:04 +0000
-Subject: [PATCH] add workaround for binutils optimization
-
----
- arch/x86/Makefile                 | 9 ++++++---
- arch/x86/boot/compressed/Makefile | 2 +-
- 2 files changed, 7 insertions(+), 4 deletions(-)
-
-diff --git a/arch/x86/Makefile b/arch/x86/Makefile
-index 083a97a..29d910c 100644
---- a/arch/x86/Makefile
-+++ b/arch/x86/Makefile
-@@ -58,7 +58,7 @@ endif
- #
- #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53383
- #
--KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow
-+KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -Wa,-mbranches-within-no-boundaries
- KBUILD_CFLAGS += $(call cc-option,-mno-avx,)
- 
- ifeq ($(CONFIG_X86_32),y)
-@@ -195,8 +195,8 @@ avx512_instr :=$(call as-instr,vpmovm2b %k1$(comma)%zmm5,-DCONFIG_AS_AVX512=1)
- sha1_ni_instr :=$(call as-instr,sha1msg1 %xmm0$(comma)%xmm1,-DCONFIG_AS_SHA1_NI=1)
- sha256_ni_instr :=$(call as-instr,sha256msg1 %xmm0$(comma)%xmm1,-DCONFIG_AS_SHA256_NI=1)
- 
--KBUILD_AFLAGS += $(cfi) $(cfi-sigframe) $(cfi-sections) $(asinstr) $(avx_instr) $(avx2_instr) $(avx512_instr) $(sha1_ni_instr) $(sha256_ni_instr)
--KBUILD_CFLAGS += $(cfi) $(cfi-sigframe) $(cfi-sections) $(asinstr) $(avx_instr) $(avx2_instr) $(avx512_instr) $(sha1_ni_instr) $(sha256_ni_instr)
-+KBUILD_AFLAGS += $(cfi) $(cfi-sigframe) $(cfi-sections) $(asinstr) $(avx_instr) $(avx2_instr) $(avx512_instr) $(sha1_ni_instr) $(sha256_ni_instr) -Wa,-mbranches-within-no-boundaries
-+KBUILD_CFLAGS += $(cfi) $(cfi-sigframe) $(cfi-sections) $(asinstr) $(avx_instr) $(avx2_instr) $(avx512_instr) $(sha1_ni_instr) $(sha256_ni_instr) -Wa,-mbranches-within-no-boundaries
- 
- KBUILD_LDFLAGS := -m elf_$(UTS_MACHINE)
- 
-@@ -208,6 +208,9 @@ KBUILD_LDFLAGS := -m elf_$(UTS_MACHINE)
- ifdef CONFIG_X86_64
- KBUILD_LDFLAGS += $(call ld-option, -z max-page-size=0x200000)
- endif
-+ifdef CONFIG_X86_64
-+KBUILD_LDFLAGS += $(call ld-option, -mbranches-within-no-boundaries)
-+endif
- 
- # Workaround for a gcc prelease that unfortunately was shipped in a suse release
- KBUILD_CFLAGS += -Wno-sign-compare
-diff --git a/arch/x86/boot/compressed/Makefile b/arch/x86/boot/compressed/Makefile
-index 6b84afd..93ba779 100644
---- a/arch/x86/boot/compressed/Makefile
-+++ b/arch/x86/boot/compressed/Makefile
-@@ -39,7 +39,7 @@ KBUILD_CFLAGS += $(call cc-disable-warning, address-of-packed-member)
- KBUILD_CFLAGS += $(call cc-disable-warning, gnu)
- KBUILD_CFLAGS += -Wno-pointer-sign
- 
--KBUILD_AFLAGS  := $(KBUILD_CFLAGS) -D__ASSEMBLY__
-+KBUILD_AFLAGS  := $(KBUILD_CFLAGS) -D__ASSEMBLY__  -Wa,-mbranches-within-no-boundaries
- GCOV_PROFILE := n
- UBSAN_SANITIZE :=n
- 
--- 
-https://clearlinux.org
-
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Mon, 11 Nov 2019 23:12:11 +0000
 Subject: [PATCH] nvme workaround
 
@@ -1128,7 +1068,7 @@ Subject: [PATCH] nvme workaround
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index 3304e2c8a448..c248f30957cf 100644
+index fa7ba09dca77..758553763243 100644
 --- a/drivers/nvme/host/core.c
 +++ b/drivers/nvme/host/core.c
 @@ -48,7 +48,7 @@ static u8 nvme_max_retries = 5;

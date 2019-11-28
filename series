@@ -1,31 +1,6 @@
 # Reordered to aid in incremental patching with regards to the kernel itself, Clear Linux, and zenpower
 # Patches not appended with _5.4 in misc likely will not require to be changed on new kernel released
-
-ck-5.4/0001-MultiQueue-Skiplist-Scheduler-v0.196.patch
-ck-5.4/0002-Make-preemptible-kernel-default.patch
-ck-5.4/0003-Expose-vmsplit-for-our-poor-32-bit-users.patch
-ck-5.4/0004-Create-highres-timeout-variants-of-schedule_timeout-.patch
-ck-5.4/0005-Special-case-calls-of-schedule_timeout-1-to-use-the-.patch
-ck-5.4/0006-Convert-msleep-to-use-hrtimers-when-active.patch
-ck-5.4/0007-Replace-all-schedule-timeout-1-with-schedule_min_hrt.patch
-ck-5.4/0008-Replace-all-calls-to-schedule_timeout_interruptible-.patch
-ck-5.4/0009-Replace-all-calls-to-schedule_timeout_uninterruptibl.patch
-ck-5.4/0010-Don-t-use-hrtimer-overlay-when-pm_freezing-since-som.patch
-ck-5.4/0011-Make-hrtimer-granularity-and-minimum-hrtimeout-confi.patch
-ck-5.4/0012-Make-threaded-IRQs-optionally-the-default-which-can-.patch
-ck-5.4/0013-Reinstate-default-Hz-of-100-in-combination-with-MuQS.patch
-ck-5.4/0014-Swap-sucks.patch
-ck-5.4/0015-Make-nohz_full-not-be-picked-up-as-a-default-config-.patch
-ck-5.4/0016-Add-ck1-version.adjusted.patch # Portage incorrectly identifies kernel with the original version
-
-amd17h_cppc/01-CPPC-optional-registers-AMD-support.patch
-amd17h_cppc/02-CPPC-optional-registers-AMD-support.patch
-amd17h_cppc/03-CPPC-optional-registers-AMD-support.patch
-amd17h_cppc/04-CPPC-optional-registers-AMD-support.patch
-amd17h_cppc/05-CPPC-optional-registers-AMD-support.patch
-amd17h_cppc/06-CPPC-optional-registers-AMD-support.patch
-# amd17h_cppc/README - 17h and newer AMD processors support ACPI v6.1, these patches add new functionality
-# Collaborative Processor Performance Control - https://www.kernel.org/doc/html/latest/admin-guide/acpi/cppc_sysfs.html
+v5.4...v5.4-pf2.diff
 
 genpatches/1500_XATTR_USER_PREFIX.patch
 genpatches/1510_fs-enable-link-security-restrictions-by-default.patch
@@ -39,9 +14,6 @@ misc/000-experimental-x86-64-opts.patch
 
 misc/001-iwd-rfkill_5.4.patch
 # Fixes issue with rfkill breaking iwd
-
-misc/002-enable_additional_cpu_optimizations_for_gcc_v9.1+_kernel_v4.13+.patch
-# Enables build optimization
 
 misc/003-better-it87-detection_5.4.patch
 # ITE chip support, but better
@@ -60,3 +32,10 @@ misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
 
 submodules/.generated/clear.patch
 # Clear Linux patches. Use patch-generator.sh for this and the above. The 5.4 release already has the wifi CVEs
+#end_of_kernel_reserve-revert.patch # Use this to bypass the building tools for checking if the linker is gold
+
+misc/009-linux-acs-override_5.4.2.patch
+# ACS override for AMD motherboards. There's a site that provides autobuilds for each kernel bump, will commit later
+
+5.4.2-5.4.3.patch
+# Fresher

@@ -2,7 +2,9 @@
 
 update_mods() {
 	git submodule update --init
-	git submodule foreach "git fetch ; git checkout master"
+	cd submodules/clear ; git checkout $(git describe --tags `git rev-list --tags --max-count=1`) ; cd $OLDPWD
+	cd submodules/zenpower; git fetch ; git pull ; git checkout master ; cd $OLDPWD
+	# git submodule foreach "git fetch ; git pull ; git checkout master" # still needs work...
 }
 update_mods
 

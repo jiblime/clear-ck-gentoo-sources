@@ -1,3 +1,0 @@
--Ofast -fgraphite-identity -floop-nest-optimize -floop-parallelize-all --param=max-unroll-times=2 --param=max-average-unrolled-insns=32 --param=max-unrolled-insns=64 -fno-inline-functions -fopt-info-vec-loop --param=max-isl-operations=0 -floop-parallelize-all -maccumulate-outgoing-args -malign-data=cacheline -fno-finite-math-only -fno-associative-math
-
-initcall_blacklist=acpi_cpufreq_data,acpi_processor_performance

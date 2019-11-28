@@ -1,4 +1,559 @@
-User generated at: Thu 28 Nov 2019 03:25:46 AM PST
+User generated at: Sat 14 Dec 2019 02:30:15 PM PST
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Gen Zhang <blackgod016574@gmail.com>
+Date: Thu, 23 May 2019 08:34:52 +0800
+Subject: [PATCH] consolemap: Fix a memory leaking bug in
+ drivers/tty/vt/consolemap.c
+
+In function con_insert_unipair(), when allocation for p2 and p1[n]
+fails, ENOMEM is returned, but previously allocated p1 is not freed,
+remains as leaking memory. Thus we should free p1 as well when this
+allocation fails.
+
+Signed-off-by: Gen Zhang <blackgod016574@gmail.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/tty/vt/consolemap.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/tty/vt/consolemap.c b/drivers/tty/vt/consolemap.c
+index b28aa0d289f8..79fcc96cc7c0 100644
+--- a/drivers/tty/vt/consolemap.c
++++ b/drivers/tty/vt/consolemap.c
+@@ -489,7 +489,11 @@ con_insert_unipair(struct uni_pagedir *p, u_short unicode, u_short fontpos)
+ 	p2 = p1[n = (unicode >> 6) & 0x1f];
+ 	if (!p2) {
+ 		p2 = p1[n] = kmalloc_array(64, sizeof(u16), GFP_KERNEL);
+-		if (!p2) return -ENOMEM;
++		if (!p2) {
++			kfree(p1);
++			p->uni_pgdir[n] = NULL;
++			return -ENOMEM;
++		}
+ 		memset(p2, 0xff, 64*sizeof(u16)); /* No glyphs for the characters (yet) */
+ 	}
+ 
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Wed, 25 Sep 2019 10:48:30 -0500
+Subject: [PATCH] i40e: prevent memory leak in i40e_setup_macvlans
+
+In i40e_setup_macvlans if i40e_setup_channel fails the allocated memory
+for ch should be released.
+
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Tested-by: Andrew Bowers <andrewx.bowers@intel.com>
+Signed-off-by: Jeff Kirsher <jeffrey.t.kirsher@intel.com>
+---
+ drivers/net/ethernet/intel/i40e/i40e_main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/ethernet/intel/i40e/i40e_main.c b/drivers/net/ethernet/intel/i40e/i40e_main.c
+index 6031223eafab..7d4a14c3fe58 100644
+--- a/drivers/net/ethernet/intel/i40e/i40e_main.c
++++ b/drivers/net/ethernet/intel/i40e/i40e_main.c
+@@ -7168,6 +7168,7 @@ static int i40e_setup_macvlans(struct i40e_vsi *vsi, u16 macvlan_cnt, u16 qcnt,
+ 		ch->num_queue_pairs = qcnt;
+ 		if (!i40e_setup_channel(pf, vsi, ch)) {
+ 			ret = -EINVAL;
++			kfree(ch);
+ 			goto err_free;
+ 		}
+ 		ch->parent_vsi = vsi;
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Mon, 21 Oct 2019 15:06:48 -0500
+Subject: [PATCH] ipmi: Fix memory leak in __ipmi_bmc_register
+
+In the impelementation of __ipmi_bmc_register() the allocated memory for
+bmc should be released in case ida_simple_get() fails.
+
+Fixes: 68e7e50f195f ("ipmi: Don't use BMC product/dev ids in the BMC name")
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Message-Id: <20191021200649.1511-1-navid.emamdoost@gmail.com>
+Signed-off-by: Corey Minyard <cminyard@mvista.com>
+---
+ drivers/char/ipmi/ipmi_msghandler.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/char/ipmi/ipmi_msghandler.c b/drivers/char/ipmi/ipmi_msghandler.c
+index 2aab80e19ae0..e4928ed46396 100644
+--- a/drivers/char/ipmi/ipmi_msghandler.c
++++ b/drivers/char/ipmi/ipmi_msghandler.c
+@@ -3031,8 +3031,11 @@ static int __ipmi_bmc_register(struct ipmi_smi *intf,
+ 		bmc->pdev.name = "ipmi_bmc";
+ 
+ 		rv = ida_simple_get(&ipmi_bmc_ida, 0, 0, GFP_KERNEL);
+-		if (rv < 0)
++		if (rv < 0) {
++			kfree(bmc);
+ 			goto out;
++		}
++
+ 		bmc->pdev.dev.driver = &ipmidriver.driver;
+ 		bmc->pdev.id = rv;
+ 		bmc->pdev.dev.release = release_bmc_device;
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Fri, 4 Oct 2019 14:34:54 -0500
+Subject: [PATCH] crypto: user - fix memory leak in crypto_reportstat
+
+In crypto_reportstat, a new skb is created by nlmsg_new(). This skb is
+leaked if crypto_reportstat_alg() fails. Required release for skb is
+added.
+
+Fixes: cac5818c25d0 ("crypto: user - Implement a generic crypto statistics")
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+---
+ crypto/crypto_user_stat.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/crypto/crypto_user_stat.c b/crypto/crypto_user_stat.c
+index 8bad88413de1..1be95432fa23 100644
+--- a/crypto/crypto_user_stat.c
++++ b/crypto/crypto_user_stat.c
+@@ -328,8 +328,10 @@ int crypto_reportstat(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
+ drop_alg:
+ 	crypto_mod_put(alg);
+ 
+-	if (err)
++	if (err) {
++		kfree_skb(skb);
+ 		return err;
++	}
+ 
+ 	return nlmsg_unicast(net->crypto_nlsk, skb, NETLINK_CB(in_skb).portid);
+ }
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Mon, 16 Sep 2019 22:31:23 -0500
+Subject: [PATCH] rpmsg: char: release allocated memory
+
+In rpmsg_eptdev_write_iter, if copy_from_iter_full fails the allocated
+buffer needs to be released.
+
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Signed-off-by: Bjorn Andersson <bjorn.andersson@linaro.org>
+---
+ drivers/rpmsg/rpmsg_char.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/rpmsg/rpmsg_char.c b/drivers/rpmsg/rpmsg_char.c
+index eea5ebbb5119..c655074c07c2 100644
+--- a/drivers/rpmsg/rpmsg_char.c
++++ b/drivers/rpmsg/rpmsg_char.c
+@@ -227,8 +227,10 @@ static ssize_t rpmsg_eptdev_write_iter(struct kiocb *iocb,
+ 	if (!kbuf)
+ 		return -ENOMEM;
+ 
+-	if (!copy_from_iter_full(kbuf, len, from))
+-		return -EFAULT;
++	if (!copy_from_iter_full(kbuf, len, from)) {
++		ret = -EFAULT;
++		goto free_kbuf;
++	}
+ 
+ 	if (mutex_lock_interruptible(&eptdev->ept_lock)) {
+ 		ret = -ERESTARTSYS;
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Wed, 25 Sep 2019 12:02:41 -0300
+Subject: [PATCH] media: rc: prevent memory leak in cx23888_ir_probe
+
+In cx23888_ir_probe if kfifo_alloc fails the allocated memory for state
+should be released.
+
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Signed-off-by: Sean Young <sean@mess.org>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+---
+ drivers/media/pci/cx23885/cx23888-ir.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/pci/cx23885/cx23888-ir.c b/drivers/media/pci/cx23885/cx23888-ir.c
+index e880afe37f15..d59ca3601785 100644
+--- a/drivers/media/pci/cx23885/cx23888-ir.c
++++ b/drivers/media/pci/cx23885/cx23888-ir.c
+@@ -1167,8 +1167,11 @@ int cx23888_ir_probe(struct cx23885_dev *dev)
+ 		return -ENOMEM;
+ 
+ 	spin_lock_init(&state->rx_kfifo_lock);
+-	if (kfifo_alloc(&state->rx_kfifo, CX23888_IR_RX_KFIFO_SIZE, GFP_KERNEL))
++	if (kfifo_alloc(&state->rx_kfifo, CX23888_IR_RX_KFIFO_SIZE,
++			GFP_KERNEL)) {
++		kfree(state);
+ 		return -ENOMEM;
++	}
+ 
+ 	state->dev = dev;
+ 	sd = &state->sd;
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Fri, 4 Oct 2019 15:08:52 -0500
+Subject: [PATCH] mwifiex: pcie: Fix memory leak in
+ mwifiex_pcie_alloc_cmdrsp_buf
+
+In mwifiex_pcie_alloc_cmdrsp_buf, a new skb is allocated which should be
+released if mwifiex_map_pci_memory() fails. The release is added.
+
+Fixes: fc3314609047 ("mwifiex: use pci_alloc/free_consistent APIs for PCIe")
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Acked-by: Ganapathi Bhat <gbhat@marvell.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+---
+ drivers/net/wireless/marvell/mwifiex/pcie.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/marvell/mwifiex/pcie.c b/drivers/net/wireless/marvell/mwifiex/pcie.c
+index eff06d59e9df..1578eaa071bd 100644
+--- a/drivers/net/wireless/marvell/mwifiex/pcie.c
++++ b/drivers/net/wireless/marvell/mwifiex/pcie.c
+@@ -1029,8 +1029,10 @@ static int mwifiex_pcie_alloc_cmdrsp_buf(struct mwifiex_adapter *adapter)
+ 	}
+ 	skb_put(skb, MWIFIEX_UPLD_SIZE);
+ 	if (mwifiex_map_pci_memory(adapter, skb, MWIFIEX_UPLD_SIZE,
+-				   PCI_DMA_FROMDEVICE))
++				   PCI_DMA_FROMDEVICE)) {
++		kfree_skb(skb);
+ 		return -1;
++	}
+ 
+ 	card->cmdrsp_buf = skb;
+ 
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Fri, 4 Oct 2019 15:16:48 -0500
+Subject: [PATCH] mwifiex: pcie: Fix memory leak in mwifiex_pcie_init_evt_ring
+
+In mwifiex_pcie_init_evt_ring, a new skb is allocated which should be
+released if mwifiex_map_pci_memory() fails. The release for skb and
+card->evtbd_ring_vbase is added.
+
+Fixes: 0732484b47b5 ("mwifiex: separate ring initialization and ring creation routines")
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Acked-by: Ganapathi Bhat <gbhat@marvell.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+---
+ drivers/net/wireless/marvell/mwifiex/pcie.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/marvell/mwifiex/pcie.c b/drivers/net/wireless/marvell/mwifiex/pcie.c
+index 1578eaa071bd..fc1706d0647d 100644
+--- a/drivers/net/wireless/marvell/mwifiex/pcie.c
++++ b/drivers/net/wireless/marvell/mwifiex/pcie.c
+@@ -687,8 +687,11 @@ static int mwifiex_pcie_init_evt_ring(struct mwifiex_adapter *adapter)
+ 		skb_put(skb, MAX_EVENT_SIZE);
+ 
+ 		if (mwifiex_map_pci_memory(adapter, skb, MAX_EVENT_SIZE,
+-					   PCI_DMA_FROMDEVICE))
++					   PCI_DMA_FROMDEVICE)) {
++			kfree_skb(skb);
++			kfree(card->evtbd_ring_vbase);
+ 			return -1;
++		}
+ 
+ 		buf_pa = MWIFIEX_SKB_DMA_ADDR(skb);
+ 
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Fri, 4 Oct 2019 14:29:16 -0500
+Subject: [PATCH] crypto: user - fix memory leak in crypto_report
+
+In crypto_report, a new skb is created via nlmsg_new(). This skb should
+be released if crypto_report_alg() fails.
+
+Fixes: a38f7907b926 ("crypto: Add userspace configuration API")
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+---
+ crypto/crypto_user_base.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/crypto/crypto_user_base.c b/crypto/crypto_user_base.c
+index 910e0b46012e..b785c476de67 100644
+--- a/crypto/crypto_user_base.c
++++ b/crypto/crypto_user_base.c
+@@ -213,8 +213,10 @@ static int crypto_report(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
+ drop_alg:
+ 	crypto_mod_put(alg);
+ 
+-	if (err)
++	if (err) {
++		kfree_skb(skb);
+ 		return err;
++	}
+ 
+ 	return nlmsg_unicast(net->crypto_nlsk, skb, NETLINK_CB(in_skb).portid);
+ }
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Tue, 24 Sep 2019 20:20:21 -0500
+Subject: [PATCH] rtlwifi: prevent memory leak in rtl_usb_probe
+
+In rtl_usb_probe if allocation for usb_data fails the allocated hw
+should be released. In addition the allocated rtlpriv->usb_data should
+be released on error handling path.
+
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+---
+ drivers/net/wireless/realtek/rtlwifi/usb.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/realtek/rtlwifi/usb.c b/drivers/net/wireless/realtek/rtlwifi/usb.c
+index 4b59f3b46b28..348b0072cdd6 100644
+--- a/drivers/net/wireless/realtek/rtlwifi/usb.c
++++ b/drivers/net/wireless/realtek/rtlwifi/usb.c
+@@ -1021,8 +1021,10 @@ int rtl_usb_probe(struct usb_interface *intf,
+ 	rtlpriv->hw = hw;
+ 	rtlpriv->usb_data = kcalloc(RTL_USB_MAX_RX_COUNT, sizeof(u32),
+ 				    GFP_KERNEL);
+-	if (!rtlpriv->usb_data)
++	if (!rtlpriv->usb_data) {
++		ieee80211_free_hw(hw);
+ 		return -ENOMEM;
++	}
+ 
+ 	/* this spin lock must be initialized early */
+ 	spin_lock_init(&rtlpriv->locks.usb_lock);
+@@ -1083,6 +1085,7 @@ int rtl_usb_probe(struct usb_interface *intf,
+ 	_rtl_usb_io_handler_release(hw);
+ 	usb_put_dev(udev);
+ 	complete(&rtlpriv->firmware_loading_complete);
++	kfree(rtlpriv->usb_data);
+ 	return -ENODEV;
+ }
+ EXPORT_SYMBOL(rtl_usb_probe);
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Sun, 29 Sep 2019 22:46:01 -0500
+Subject: [PATCH] spi: lpspi: fix memory leak in fsl_lpspi_probe
+
+In fsl_lpspi_probe an SPI controller is allocated either via
+spi_alloc_slave or spi_alloc_master. In all but one error cases this
+controller is put by going to error handling code. This commit fixes the
+case when pm_runtime_get_sync fails and it should go to the error
+handling path.
+
+Fixes: 944c01a889d9 ("spi: lpspi: enable runtime pm for lpspi")
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Link: https://lore.kernel.org/r/20190930034602.1467-1-navid.emamdoost@gmail.com
+Signed-off-by: Mark Brown <broonie@kernel.org>
+---
+ drivers/spi/spi-fsl-lpspi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/spi/spi-fsl-lpspi.c b/drivers/spi/spi-fsl-lpspi.c
+index d08e9324140e..3528ed5eea9b 100644
+--- a/drivers/spi/spi-fsl-lpspi.c
++++ b/drivers/spi/spi-fsl-lpspi.c
+@@ -938,7 +938,7 @@ static int fsl_lpspi_probe(struct platform_device *pdev)
+ 	ret = pm_runtime_get_sync(fsl_lpspi->dev);
+ 	if (ret < 0) {
+ 		dev_err(fsl_lpspi->dev, "failed to enable clock\n");
+-		return ret;
++		goto out_controller_put;
+ 	}
+ 
+ 	temp = readl(fsl_lpspi->base + IMX7ULP_PARAM);
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Tue, 10 Sep 2019 18:44:15 -0500
+Subject: [PATCH] scsi: bfa: release allocated memory in case of error
+
+In bfad_im_get_stats if bfa_port_get_stats fails, allocated memory needs to
+be released.
+
+Link: https://lore.kernel.org/r/20190910234417.22151-1-navid.emamdoost@gmail.com
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+---
+ drivers/scsi/bfa/bfad_attr.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/scsi/bfa/bfad_attr.c b/drivers/scsi/bfa/bfad_attr.c
+index 29ab81df75c0..fbfce02e5b93 100644
+--- a/drivers/scsi/bfa/bfad_attr.c
++++ b/drivers/scsi/bfa/bfad_attr.c
+@@ -275,8 +275,10 @@ bfad_im_get_stats(struct Scsi_Host *shost)
+ 	rc = bfa_port_get_stats(BFA_FCPORT(&bfad->bfa),
+ 				fcstats, bfad_hcb_comp, &fcomp);
+ 	spin_unlock_irqrestore(&bfad->bfad_lock, flags);
+-	if (rc != BFA_STATUS_OK)
++	if (rc != BFA_STATUS_OK) {
++		kfree(fcstats);
+ 		return NULL;
++	}
+ 
+ 	wait_for_completion(&fcomp.comp);
+ 
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Thu, 19 Sep 2019 22:00:41 -0500
+Subject: [PATCH] rtl8xxxu: prevent leaking urb
+
+In rtl8xxxu_submit_int_urb if usb_submit_urb fails the allocated urb
+should be released.
+
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Reviewed-by: Chris Chiu <chiu@endlessm.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+---
+ drivers/net/wireless/realtek/rtl8xxxu/rtl8xxxu_core.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/wireless/realtek/rtl8xxxu/rtl8xxxu_core.c b/drivers/net/wireless/realtek/rtl8xxxu/rtl8xxxu_core.c
+index c6c41fb962ff..776bbae14a8d 100644
+--- a/drivers/net/wireless/realtek/rtl8xxxu/rtl8xxxu_core.c
++++ b/drivers/net/wireless/realtek/rtl8xxxu/rtl8xxxu_core.c
+@@ -5444,6 +5444,7 @@ static int rtl8xxxu_submit_int_urb(struct ieee80211_hw *hw)
+ 	ret = usb_submit_urb(urb, GFP_KERNEL);
+ 	if (ret) {
+ 		usb_unanchor_urb(urb);
++		usb_free_urb(urb);
+ 		goto error;
+ 	}
+ 
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Mon, 30 Sep 2019 15:52:40 -0500
+Subject: [PATCH] spi: gpio: prevent memory leak in spi_gpio_probe
+
+In spi_gpio_probe an SPI master is allocated via spi_alloc_master, but
+this controller should be released if devm_add_action_or_reset fails,
+otherwise memory leaks. In order to avoid leak spi_contriller_put must
+be called in case of failure for devm_add_action_or_reset.
+
+Fixes: 8b797490b4db ("spi: gpio: Make sure spi_master_put() is called in every error path")
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Link: https://lore.kernel.org/r/20190930205241.5483-1-navid.emamdoost@gmail.com
+Signed-off-by: Mark Brown <broonie@kernel.org>
+---
+ drivers/spi/spi-gpio.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/spi/spi-gpio.c b/drivers/spi/spi-gpio.c
+index 1d3e23ec20a6..f9c5bbb74714 100644
+--- a/drivers/spi/spi-gpio.c
++++ b/drivers/spi/spi-gpio.c
+@@ -371,8 +371,10 @@ static int spi_gpio_probe(struct platform_device *pdev)
+ 		return -ENOMEM;
+ 
+ 	status = devm_add_action_or_reset(&pdev->dev, spi_gpio_put, master);
+-	if (status)
++	if (status) {
++		spi_master_put(master);
+ 		return status;
++	}
+ 
+ 	if (of_id)
+ 		status = spi_gpio_probe_dt(pdev, master);
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Fri, 13 Sep 2019 19:08:11 -0500
+Subject: [PATCH] rsi: release skb if rsi_prepare_beacon fails
+
+In rsi_send_beacon, if rsi_prepare_beacon fails the allocated skb should
+be released.
+
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+---
+ drivers/net/wireless/rsi/rsi_91x_mgmt.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/wireless/rsi/rsi_91x_mgmt.c b/drivers/net/wireless/rsi/rsi_91x_mgmt.c
+index 6c7f26ef6476..9cc8a335d519 100644
+--- a/drivers/net/wireless/rsi/rsi_91x_mgmt.c
++++ b/drivers/net/wireless/rsi/rsi_91x_mgmt.c
+@@ -1756,6 +1756,7 @@ static int rsi_send_beacon(struct rsi_common *common)
+ 		skb_pull(skb, (64 - dword_align_bytes));
+ 	if (rsi_prepare_beacon(common, skb)) {
+ 		rsi_dbg(ERR_ZONE, "Failed to prepare beacon\n");
++		dev_kfree_skb(skb);
+ 		return -EINVAL;
+ 	}
+ 	skb_queue_tail(&common->tx_queue[MGMT_BEACON_Q], skb);
+-- 
+https://clearlinux.org
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Navid Emamdoost <navid.emamdoost@gmail.com>
+Date: Thu, 19 Sep 2019 20:36:26 -0500
+Subject: [PATCH] ath10k: fix memory leak
+
+In ath10k_usb_hif_tx_sg the allocated urb should be released if
+usb_submit_urb fails.
+
+Signed-off-by: Navid Emamdoost <navid.emamdoost@gmail.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+---
+ drivers/net/wireless/ath/ath10k/usb.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/wireless/ath/ath10k/usb.c b/drivers/net/wireless/ath/ath10k/usb.c
+index 9ebe74ee4aef..1e0343081be9 100644
+--- a/drivers/net/wireless/ath/ath10k/usb.c
++++ b/drivers/net/wireless/ath/ath10k/usb.c
+@@ -443,6 +443,7 @@ static int ath10k_usb_hif_tx_sg(struct ath10k *ar, u8 pipe_id,
+ 			ath10k_dbg(ar, ATH10K_DBG_USB_BULK,
+ 				   "usb bulk transmit failed: %d\n", ret);
+ 			usb_unanchor_urb(urb);
++			usb_free_urb(urb);
+ 			ret = -EINVAL;
+ 			goto err_free_urb_to_pipe;
+ 		}
+-- 
+https://clearlinux.org
+
+User generated at: Sat 14 Dec 2019 02:30:20 PM PST
+User generated at: Sat 14 Dec 2019 02:30:26 PM PST
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Tue, 23 Jun 2015 01:26:52 -0500
@@ -13,10 +568,10 @@ Signed-off-by: Jose Carlos Venegas Munoz <jos.c.venegas.munoz@intel.com>
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/input/serio/i8042.c b/drivers/input/serio/i8042.c
-index b695094290ab..8071cd0b2c40 100644
+index 20ff2bed3917..9716c549a76b 100644
 --- a/drivers/input/serio/i8042.c
 +++ b/drivers/input/serio/i8042.c
-@@ -597,7 +597,7 @@ static int i8042_enable_kbd_port(void)
+@@ -611,7 +611,7 @@ static int i8042_enable_kbd_port(void)
  	if (i8042_command(&i8042_ctr, I8042_CMD_CTL_WCTR)) {
  		i8042_ctr &= ~I8042_CTR_KBDINT;
  		i8042_ctr |= I8042_CTR_KBDDIS;
@@ -25,7 +580,7 @@ index b695094290ab..8071cd0b2c40 100644
  		return -EIO;
  	}
  
-@@ -616,7 +616,7 @@ static int i8042_enable_aux_port(void)
+@@ -630,7 +630,7 @@ static int i8042_enable_aux_port(void)
  	if (i8042_command(&i8042_ctr, I8042_CMD_CTL_WCTR)) {
  		i8042_ctr &= ~I8042_CTR_AUXINT;
  		i8042_ctr |= I8042_CTR_AUXDIS;
@@ -34,7 +589,7 @@ index b695094290ab..8071cd0b2c40 100644
  		return -EIO;
  	}
  
-@@ -708,7 +708,7 @@ static int __init i8042_check_mux(void)
+@@ -722,7 +722,7 @@ static int __init i8042_check_mux(void)
  	i8042_ctr &= ~I8042_CTR_AUXINT;
  
  	if (i8042_command(&i8042_ctr, I8042_CMD_CTL_WCTR)) {
@@ -43,7 +598,7 @@ index b695094290ab..8071cd0b2c40 100644
  		return -EIO;
  	}
  
-@@ -931,7 +931,7 @@ static int i8042_controller_selftest(void)
+@@ -945,7 +945,7 @@ static int i8042_controller_selftest(void)
  	do {
  
  		if (i8042_command(&param, I8042_CMD_CTL_TEST)) {
@@ -52,7 +607,7 @@ index b695094290ab..8071cd0b2c40 100644
  			return -ENODEV;
  		}
  
-@@ -953,7 +953,7 @@ static int i8042_controller_selftest(void)
+@@ -967,7 +967,7 @@ static int i8042_controller_selftest(void)
  	pr_info("giving up on controller selftest, continuing anyway...\n");
  	return 0;
  #else
@@ -74,7 +629,7 @@ Subject: [PATCH] silence rapl
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/powercap/intel_rapl_common.c b/drivers/powercap/intel_rapl_common.c
-index 6df481896b5f..7ce4268b6e2d 100644
+index 94ddd7d659c8..8c5a87f5f966 100644
 --- a/drivers/powercap/intel_rapl_common.c
 +++ b/drivers/powercap/intel_rapl_common.c
 @@ -1419,7 +1419,7 @@ static int __init rapl_init(void)
@@ -101,7 +656,7 @@ boards (sadly, too many of them) in laptops.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
-index 1b27b5af3d55..6df75f4c1a2e 100644
+index a97e2571a527..772e8935aa60 100644
 --- a/drivers/pci/pci.c
 +++ b/drivers/pci/pci.c
 @@ -61,7 +61,7 @@ struct pci_pme_device {
@@ -131,7 +686,7 @@ Signed-off-by: Arjan van de Ven <arjan@linux.intel.com>
  2 files changed, 9 insertions(+), 4 deletions(-)
 
 diff --git a/kernel/watchdog.c b/kernel/watchdog.c
-index 7f9e7b9306fe..cb2afbda5da4 100644
+index f41334ef0971..eb49c42f215b 100644
 --- a/kernel/watchdog.c
 +++ b/kernel/watchdog.c
 @@ -41,7 +41,7 @@ unsigned long __read_mostly watchdog_enabled;
@@ -144,10 +699,10 @@ index 7f9e7b9306fe..cb2afbda5da4 100644
  
  static struct cpumask watchdog_allowed_mask __read_mostly;
 diff --git a/mm/ksm.c b/mm/ksm.c
-index 3dc4346411e4..5f4b6d59eebb 100644
+index 7905934cd3ad..9ea848346a0b 100644
 --- a/mm/ksm.c
 +++ b/mm/ksm.c
-@@ -2432,9 +2432,14 @@ static int ksm_scan_thread(void *nothing)
+@@ -2414,9 +2414,14 @@ static int ksm_scan_thread(void *nothing)
  
  		if (ksmd_should_run()) {
  			sleep_ms = READ_ONCE(ksm_thread_sleep_millisecs);
@@ -184,7 +739,7 @@ performance while keeping power efficiency
  1 file changed, 22 insertions(+), 22 deletions(-)
 
 diff --git a/drivers/idle/intel_idle.c b/drivers/idle/intel_idle.c
-index fa5ff77b8fe4..5da118b0b98b 100644
+index 347b08b56042..31772dd98192 100644
 --- a/drivers/idle/intel_idle.c
 +++ b/drivers/idle/intel_idle.c
 @@ -454,7 +454,7 @@ static struct cpuidle_state hsw_cstates[] = {
@@ -400,10 +955,10 @@ saves 200ms+ of boot time.
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/x86/kernel/tsc.c b/arch/x86/kernel/tsc.c
-index 57d87f79558f..cc089f651b73 100644
+index 7e322e2daaf5..bb2c9b5eed71 100644
 --- a/arch/x86/kernel/tsc.c
 +++ b/arch/x86/kernel/tsc.c
-@@ -1525,6 +1525,9 @@ unsigned long calibrate_delay_is_known(void)
+@@ -1528,6 +1528,9 @@ unsigned long calibrate_delay_is_known(void)
  	if (!constant_tsc || !mask)
  		return 0;
  
@@ -436,7 +991,7 @@ Signed-off-by: Jim Kukunas <james.t.kukunas@linux.intel.com>
  create mode 100644 lib/raid6/Kconfig
 
 diff --git a/lib/Kconfig b/lib/Kconfig
-index 4e6b1c3e4c98..b19dbca112a9 100644
+index 3321d04dfa5a..e4343fa05964 100644
 --- a/lib/Kconfig
 +++ b/lib/Kconfig
 @@ -8,8 +8,7 @@ config BINARY_PRINTF
@@ -585,7 +1140,7 @@ in parallel
  1 file changed, 8 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/Makefile b/drivers/Makefile
-index 6d37564e783c..79a802e75c72 100644
+index aaef17cc6512..d08f3a394929 100644
 --- a/drivers/Makefile
 +++ b/drivers/Makefile
 @@ -58,15 +58,8 @@ obj-y				+= char/
@@ -637,10 +1192,10 @@ rdrand and rdtsc add zero entropy.
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/char/random.c b/drivers/char/random.c
-index 5d5ea4ce1442..9a55e0ca9b51 100644
+index 01b8868b9bed..8544472650ea 100644
 --- a/drivers/char/random.c
 +++ b/drivers/char/random.c
-@@ -1877,6 +1877,8 @@ static void __init init_std_data(struct entropy_store *r)
+@@ -1937,6 +1937,8 @@ static void __init init_std_data(struct entropy_store *r)
  		if (!arch_get_random_seed_long(&rv) &&
  		    !arch_get_random_long(&rv))
  			rv = random_get_entropy();
@@ -663,10 +1218,10 @@ Subject: [PATCH] ipv4/tcp: allow the memory tuning for tcp to go a little
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
-index 61082065b26a..da4d1df4c37e 100644
+index d8876f0e9672..bbd15a66bf6e 100644
 --- a/net/ipv4/tcp.c
 +++ b/net/ipv4/tcp.c
-@@ -3982,8 +3982,8 @@ void __init tcp_init(void)
+@@ -4001,8 +4001,8 @@ void __init tcp_init(void)
  	tcp_init_mem();
  	/* Set per-socket limits to no more than 1/128 the pressure threshold */
  	limit = nr_free_buffer_pages() << (PAGE_SHIFT - 7);
@@ -690,7 +1245,7 @@ Subject: [PATCH] kernel: time: reduce ntp wakeups
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
-index 65eb796610dc..25a9d8c6d51d 100644
+index 069ca78fb0bf..22d82f21fc2e 100644
 --- a/kernel/time/ntp.c
 +++ b/kernel/time/ntp.c
 @@ -513,7 +513,7 @@ static void sched_sync_hw_clock(struct timespec64 now,
@@ -717,10 +1272,10 @@ Subject: [PATCH] print fsync count for bootchart
  3 files changed, 5 insertions(+)
 
 diff --git a/block/blk-core.c b/block/blk-core.c
-index d0cc6e14d2f0..11f5eed9bad3 100644
+index d5e668ec751b..be554fee0584 100644
 --- a/block/blk-core.c
 +++ b/block/blk-core.c
-@@ -1150,6 +1150,9 @@ blk_qc_t submit_bio(struct bio *bio)
+@@ -1168,6 +1168,9 @@ blk_qc_t submit_bio(struct bio *bio)
  			count_vm_events(PGPGIN, count);
  		}
  
@@ -731,17 +1286,17 @@ index d0cc6e14d2f0..11f5eed9bad3 100644
  			char b[BDEVNAME_SIZE];
  			printk(KERN_DEBUG "%s(%d): %s block %Lu on %s (%u sectors)\n",
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 9f51932bd543..133150605925 100644
+index 775503573ed7..08eb6063db49 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -880,6 +880,7 @@ struct task_struct {
- 	struct task_cputime		cputime_expires;
- 	struct list_head		cpu_timers[3];
+@@ -881,6 +881,7 @@ struct task_struct {
+ 	/* Cached requested key. */
+ 	struct key			*cached_requested_key;
  #endif
 +	int fsync_count;
  
- 	/* Process credentials: */
- 
+ 	/*
+ 	 * executable name, excluding path.
 diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
 index f7e4579e746c..2e4e887349ff 100644
 --- a/kernel/sched/debug.c
@@ -822,7 +1377,7 @@ Subject: [PATCH] use lfence instead of rep and nop
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 6e0a3b43d027..c2dab0cb2d48 100644
+index 54f5d54280f6..ee60a1f2dd11 100644
 --- a/arch/x86/include/asm/processor.h
 +++ b/arch/x86/include/asm/processor.h
 @@ -647,7 +647,7 @@ static inline unsigned int cpuid_edx(unsigned int op)
@@ -849,7 +1404,7 @@ Subject: [PATCH] do accept() in LIFO order for cache efficiency
  3 files changed, 27 insertions(+), 1 deletion(-)
 
 diff --git a/include/linux/wait.h b/include/linux/wait.h
-index 30c515520fb2..42da719643a8 100644
+index 3eb7cae8206c..340ca4b81b26 100644
 --- a/include/linux/wait.h
 +++ b/include/linux/wait.h
 @@ -162,6 +162,7 @@ static inline bool wq_has_sleeper(struct wait_queue_head *wq_head)
@@ -911,7 +1466,7 @@ index c1e566a114ca..5f8fca88ab23 100644
  {
  	wq_entry->flags = flags;
 diff --git a/net/ipv4/inet_connection_sock.c b/net/ipv4/inet_connection_sock.c
-index f5c163d4771b..5e06349dd0b1 100644
+index eb30fc1770de..71e8dc087870 100644
 --- a/net/ipv4/inet_connection_sock.c
 +++ b/net/ipv4/inet_connection_sock.c
 @@ -407,7 +407,7 @@ static int inet_csk_wait_for_connect(struct sock *sk, long timeo)
@@ -937,10 +1492,10 @@ tweak rwsem owner spinning a bit
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/locking/rwsem.c b/kernel/locking/rwsem.c
-index bd0f0d05724c..16f51906fd99 100644
+index eef04551eae7..1ec5ab4c8ff7 100644
 --- a/kernel/locking/rwsem.c
 +++ b/kernel/locking/rwsem.c
-@@ -716,6 +716,7 @@ rwsem_spin_on_owner(struct rw_semaphore *sem, unsigned long nonspinnable)
+@@ -720,6 +720,7 @@ rwsem_spin_on_owner(struct rw_semaphore *sem, unsigned long nonspinnable)
  	struct task_struct *new, *owner;
  	unsigned long flags, new_flags;
  	enum owner_state state;
@@ -948,7 +1503,7 @@ index bd0f0d05724c..16f51906fd99 100644
  
  	owner = rwsem_owner_flags(sem, &flags);
  	state = rwsem_owner_state(owner, flags, nonspinnable);
-@@ -748,7 +749,8 @@ rwsem_spin_on_owner(struct rw_semaphore *sem, unsigned long nonspinnable)
+@@ -753,7 +754,8 @@ rwsem_spin_on_owner(struct rw_semaphore *sem, unsigned long nonspinnable)
  			break;
  		}
  
@@ -980,7 +1535,7 @@ Signed-off-by: Joe Konno <joe.konno@intel.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/ata/libahci.c b/drivers/ata/libahci.c
-index e4c45d3cca79..6673a44785c0 100644
+index bff369d9a1a7..30d5784741d1 100644
 --- a/drivers/ata/libahci.c
 +++ b/drivers/ata/libahci.c
 @@ -33,14 +33,14 @@
@@ -1043,7 +1598,7 @@ If force_ucode_load==true, reload ucode even if revision # is identical.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/cpu/microcode/intel.c b/arch/x86/kernel/cpu/microcode/intel.c
-index 5c67ac0..2ca566b 100644
+index 5c67ac023f4a..2ca566bedfc8 100644
 --- a/arch/x86/kernel/cpu/microcode/intel.c
 +++ b/arch/x86/kernel/cpu/microcode/intel.c
 @@ -865,7 +865,7 @@ static enum ucode_state apply_microcode_intel(int cpu)
@@ -1060,66 +1615,6 @@ https://clearlinux.org
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
-Date: Wed, 6 Nov 2019 04:03:04 +0000
-Subject: [PATCH] add workaround for binutils optimization
-
----
- arch/x86/Makefile                 | 9 ++++++---
- arch/x86/boot/compressed/Makefile | 2 +-
- 2 files changed, 7 insertions(+), 4 deletions(-)
-
-diff --git a/arch/x86/Makefile b/arch/x86/Makefile
-index 083a97a..29d910c 100644
---- a/arch/x86/Makefile
-+++ b/arch/x86/Makefile
-@@ -58,7 +58,7 @@ endif
- #
- #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53383
- #
--KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow
-+KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -Wa,-mbranches-within-no-boundaries
- KBUILD_CFLAGS += $(call cc-option,-mno-avx,)
- 
- ifeq ($(CONFIG_X86_32),y)
-@@ -195,8 +195,8 @@ avx512_instr :=$(call as-instr,vpmovm2b %k1$(comma)%zmm5,-DCONFIG_AS_AVX512=1)
- sha1_ni_instr :=$(call as-instr,sha1msg1 %xmm0$(comma)%xmm1,-DCONFIG_AS_SHA1_NI=1)
- sha256_ni_instr :=$(call as-instr,sha256msg1 %xmm0$(comma)%xmm1,-DCONFIG_AS_SHA256_NI=1)
- 
--KBUILD_AFLAGS += $(cfi) $(cfi-sigframe) $(cfi-sections) $(asinstr) $(avx_instr) $(avx2_instr) $(avx512_instr) $(sha1_ni_instr) $(sha256_ni_instr)
--KBUILD_CFLAGS += $(cfi) $(cfi-sigframe) $(cfi-sections) $(asinstr) $(avx_instr) $(avx2_instr) $(avx512_instr) $(sha1_ni_instr) $(sha256_ni_instr)
-+KBUILD_AFLAGS += $(cfi) $(cfi-sigframe) $(cfi-sections) $(asinstr) $(avx_instr) $(avx2_instr) $(avx512_instr) $(sha1_ni_instr) $(sha256_ni_instr) -Wa,-mbranches-within-no-boundaries
-+KBUILD_CFLAGS += $(cfi) $(cfi-sigframe) $(cfi-sections) $(asinstr) $(avx_instr) $(avx2_instr) $(avx512_instr) $(sha1_ni_instr) $(sha256_ni_instr) -Wa,-mbranches-within-no-boundaries
- 
- KBUILD_LDFLAGS := -m elf_$(UTS_MACHINE)
- 
-@@ -208,6 +208,9 @@ KBUILD_LDFLAGS := -m elf_$(UTS_MACHINE)
- ifdef CONFIG_X86_64
- KBUILD_LDFLAGS += $(call ld-option, -z max-page-size=0x200000)
- endif
-+ifdef CONFIG_X86_64
-+KBUILD_LDFLAGS += $(call ld-option, -mbranches-within-no-boundaries)
-+endif
- 
- # Workaround for a gcc prelease that unfortunately was shipped in a suse release
- KBUILD_CFLAGS += -Wno-sign-compare
-diff --git a/arch/x86/boot/compressed/Makefile b/arch/x86/boot/compressed/Makefile
-index 6b84afd..93ba779 100644
---- a/arch/x86/boot/compressed/Makefile
-+++ b/arch/x86/boot/compressed/Makefile
-@@ -39,7 +39,7 @@ KBUILD_CFLAGS += $(call cc-disable-warning, address-of-packed-member)
- KBUILD_CFLAGS += $(call cc-disable-warning, gnu)
- KBUILD_CFLAGS += -Wno-pointer-sign
- 
--KBUILD_AFLAGS  := $(KBUILD_CFLAGS) -D__ASSEMBLY__
-+KBUILD_AFLAGS  := $(KBUILD_CFLAGS) -D__ASSEMBLY__  -Wa,-mbranches-within-no-boundaries
- GCOV_PROFILE := n
- UBSAN_SANITIZE :=n
- 
--- 
-https://clearlinux.org
-
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Mon, 11 Nov 2019 23:12:11 +0000
 Subject: [PATCH] nvme workaround
 
@@ -1128,7 +1623,7 @@ Subject: [PATCH] nvme workaround
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index 3304e2c8a448..c248f30957cf 100644
+index fa7ba09dca77..758553763243 100644
 --- a/drivers/nvme/host/core.c
 +++ b/drivers/nvme/host/core.c
 @@ -48,7 +48,7 @@ static u8 nvme_max_retries = 5;

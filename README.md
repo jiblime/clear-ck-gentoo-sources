@@ -4,6 +4,8 @@
 
 The intention of this project is to streamline the process of using the patching system to harden/optimize the Linux kernel for Gentoo, primarily with the MuQSS patchset, Clear Linux patches, and Gentoo's genpatches for the x86-64 architecture. An emphasis is placed on the current stable kernel to follow ongoing development. 
 
+Now there is a splinter branch for the BMQ scheduler by Alfred Chen, using Oleksandr Natalenko's pf-kernel patchset. So the information below may be different than what is in the patch series.
+
 ---
 
 **Currently included in the patchsets:**
@@ -20,6 +22,14 @@ The intention of this project is to streamline the process of using the patching
 
 **/6/7/etc.** Random patches I've piled in to test. Read the heads of each patch to get a URL to patch source and some information. The (now) unmaintainted it87.c replacement is *still* much further ahead in development than the in-kernel version. 
 
+
+BMQ/pf-kernel patchsets:
+
+**1.** pf-kernel .diff which contains a mish mash of things, foremost the BMQ scheduler
+	- A userspace interface to handle kernel samepage merging (uksmd) made by Oleksandr Natalenko
+	- Other stuff that's not listed, like which patch x.x.? it is on
+
+**2.** All the above listed, sans MuQSS/ck1. The main difference is the scheduler. 
 
 ---
 
@@ -52,6 +62,21 @@ https://github.com/ocerman/zenpower
 https://github.com/ocerman/zenmonitor
 ```
 
+BMQ is based off of PDS and inspired by Google's own kernel/OS project, Zircon (for Fuschia). 
+
+```
+https://cchalpha.blogspot.com/
+https://gitlab.com/alfredchen/linux-bmq/raw/linux-5.4.y-bmq/Documentation/scheduler/sched-BMQ.txt
+https://fuchsia.dev/fuchsia-src/concepts/kernel/kernel_scheduling.md
+```
+
+pf-kernel is a quickly maintained patchset that utilizes BMQ and enhances other areas of the kernel, much in the same way that Con Kolivas' entire patchset is beneficial to his scheduler.
+```
+https://gitlab.com/post-factum/pf-kernel/-/wikis/README
+https://gitlab.com/post-factum/uksmd
+```
+
+
 
 Examples of different ways to attain the two-point release kernel:
 
@@ -80,6 +105,7 @@ Examples of different ways to attain the two-point release kernel:
 
 -  `CONFIG_FORCE_IRQ_THREADING is not set`: This is only needed for those who are unable to boot when `CONFIG_FORCE_IRQ_THREADING=Y`, and is off by default.
 
+- BMQ notes: When switching schedulers, remember to run `make oldconfig`; CONFIG_SCHED_TIMESLICE isn't recommended to be tuned yet; CONFIG_HZ is dependent on application, vs. the recommended 100Hz for MuQSS
 
 
 ## Gentoo Example Installation (WIP)
