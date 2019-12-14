@@ -115,6 +115,8 @@ cl_distro+="*-x86-microcode-Force-update-a-uCode-even-if-the-rev-i.patch|"
 # Intel specific? Unsure of the need for this.
 cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch|"
 # Same as above.
+cl_distro+="*-fix-bug-in-ucode-force-reload-revision-check.patch|"
+# Same as above.
 cl_distro+="*-staging-exfat-add-exfat-filesystem-code-to-staging.patch|"
 # I haven't looked into it but I think this has been upstreamed already
 cl_distro+="*-driver-core-add-dev_groups-to-all-drivers.patch|"
