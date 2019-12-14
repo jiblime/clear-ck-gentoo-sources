@@ -76,7 +76,7 @@ Examples of different ways to attain the two-point release kernel:
 
 - `CONFIG_RQ_MC=Y`: Best for those who are interested in low latency, but the other runqueues have their uses
 
-- Note: 5.3 has introduced `CONFIG_RQ_LLC` for CPUs with multiple last level caches which many new processors have; worth testing!
+- Note: 5.3 has introduced `CONFIG_RQ_MC_LLC` for CPUs with multiple last level caches which many new processors have; worth testing!
 
 -  `CONFIG_FORCE_IRQ_THREADING is not set`: This is only needed for those who are unable to boot when `CONFIG_FORCE_IRQ_THREADING=Y`, and is off by default.
 
