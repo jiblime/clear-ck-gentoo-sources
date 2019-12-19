@@ -38,4 +38,6 @@ misc/009-linux-acs-override_5.4.2.patch
 # ACS override for AMD motherboards. There's a site that provides autobuilds for each kernel bump, will commit later
 
 5.4.2-5.4.3.patch
+5.4.3-5.4.4.patch
+5.4.4-5.4.5.patch
 # Fresher
