@@ -1,6 +1,6 @@
 # Reordered to aid in incremental patching with regards to the kernel itself, Clear Linux, and zenpower
 # Patches not appended with _5.4 in misc likely will not require to be changed on new kernel released
-v5.4...v5.4-pf2.diff
+v5.4...v5.4-pf3.diff
 
 genpatches/1500_XATTR_USER_PREFIX.patch
 genpatches/1510_fs-enable-link-security-restrictions-by-default.patch
@@ -10,10 +10,17 @@ genpatches/2600_enable-key-swapping-for-apple-mac.patch
 genpatches/4567_distro-Gentoo-Kconfig.patch
 
 misc/000-experimental-x86-64-opts.patch
-# Enables native -O3 compilation support, switched 32bit arch fromo i386 to i686
+# Enables native -O3 compilation support, switched 32bit arch fromo i386 to i686 (for pf-kernel the -O3 compile is already enabled)
 
-misc/001-iwd-rfkill_5.4.patch
+# misc/001-iwd-rfkill_5.4.patch
 # Fixes issue with rfkill breaking iwd
+# --Already included--
+#  Hunk #1 FAILED at 57.
+#  1 out of 1 hunk FAILED -- rejects in file include/linux/miscdevice.h
+#  Hunk #1 FAILED at 1316.
+#  Hunk #2 FAILED at 1371.
+#  2 out of 2 hunks FAILED -- rejects in file net/rfkill/core.c
+
 
 misc/003-better-it87-detection_5.4.patch
 # ITE chip support, but better
@@ -26,6 +33,7 @@ misc/005-async-futex2_5.4.patch
 
 misc/006-treewide-awk-5.0-over-escaping-fix_5.4.patch
 # Removes unneeded escaping for awk >=5.0
+# Needs fixing
 
 misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
 # Builds a master branch version of a user maintained module for Ryzen processors in kernel
@@ -35,9 +43,8 @@ submodules/.generated/clear.patch
 #end_of_kernel_reserve-revert.patch # Use this to bypass the building tools for checking if the linker is gold
 
 misc/009-linux-acs-override_5.4.2.patch
-# ACS override for AMD motherboards. There's a site that provides autobuilds for each kernel bump, will commit later
+# ACS override for AMD motherboards. Source: https://queuecumber.gitlab.io/linux-acs-override/
+# TODO: Pull latest version via patch-generator
 
-5.4.2-5.4.3.patch
-5.4.3-5.4.4.patch
-5.4.4-5.4.5.patch
-# Fresher
+# 5.4.7
+5.4.7_incremental.patch

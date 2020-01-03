@@ -121,9 +121,9 @@ cl_distro+="*-staging-exfat-add-exfat-filesystem-code-to-staging.patch|"
 # I haven't looked into it but I think this has been upstreamed already
 cl_distro+="*-driver-core-add-dev_groups-to-all-drivers.patch|"
 # Doesn't patch
-cl_distro+="*-Revert-iwlwifi-assign-directly-to-iwl_trans-cfg-in-Q.patch|"
+cl_distro+="*-Revert-iwlwifi-assign-directly-to-iwl_trans-cfg-in-Q.patch"
 # Doesn't need to be reverted?
-cl_distro+="*-add-workaround-for-binutils-optimization.patch"
+#cl_distro+="*-add-workaround-for-binutils-optimization.patch"
 # x86_64-pc-linux-gnu/bin/as: unrecognized option '-mbranches-within-no-boundaries'
 # Patches to recompile binutils with here: https://github.com/clearlinux-pkgs/binutils
 
