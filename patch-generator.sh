@@ -123,6 +123,8 @@ cl_distro+="*-driver-core-add-dev_groups-to-all-drivers.patch|"
 # Doesn't patch
 cl_distro+="*-Revert-iwlwifi-assign-directly-to-iwl_trans-cfg-in-Q.patch|"
 # Doesn't need to be reverted?
+cl_distro+="*drm-i915*.patch|"
+# Very niche cases, there does not seem to be a need for this unless you own a new version of anything that uses the i915 drivers
 cl_distro+="*-add-workaround-for-binutils-optimization.patch"
 # x86_64-pc-linux-gnu/bin/as: unrecognized option '-mbranches-within-no-boundaries'
 # Patches to recompile binutils with here: https://github.com/clearlinux-pkgs/binutils
