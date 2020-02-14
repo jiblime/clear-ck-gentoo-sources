@@ -40,3 +40,9 @@ submodules/.generated/clear.patch
 misc/009-linux-acs-override_5.4.10.patch
 # ACS override for AMD motherboards. Source: https://queuecumber.gitlab.io/linux-acs-override/
 # TODO: Pull latest version via patch-generator
+
+misc/010-iwlwifi-mvm-3168-PHY_SKU-NVM-fix_5.5.patch
+# Do not require PHY_SKU NVM section for 3168 devices
+# https://patchwork.kernel.org/patch/11353871/
+# > The only person who really understand what goes on here is Luca
+# Don't expect an explanation for this one
