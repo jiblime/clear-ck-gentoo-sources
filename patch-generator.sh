@@ -60,43 +60,13 @@ esac
 }
 
 
-#fpga-patches()
-#{
-#FPGA=$(cd submodules/clear; ls | grep 'fpga.*\.patch'; cd $OLDPWD)
-#echo -e "FPGA patches\n${FPGA}\n"
-#}
-#
-## TODO: Combine create_fpga and cl-patches to make using this less troublesome.
-## CVE patches are excluded because of how fast they may be included in upstream
-#create_fpga()
-#{
-#echo -e "Field-programmable gate array\nUnlikely that you have this, but adding these patches won't do any harm"
-#read -p "Include FPGA patches?[Y/n] " create_fpga
-#echo -e "User generated at: $(date)" > submodules/.generated/0002-CL-FPGA.patch
-#
-#case "${create_fpga}" in
-#	[Yy]* | '')
-#		cat submodules/clear/*fpga*.patch >> submodules/.generated/0002-CL-FPGA.patch && echo -e "\n\e[32mAdded FPGA patches.\e[0m\n"
-#		;;
-#	[Nn]*)
-#		echo -e "\n\e[31mNot adding FPGA patches and removing older patches.\e[0m\n"
-#		rm submodules/.generated/0002-CL-FPGA.patch
-#		;;
-#	*)
-#		echo "Input unrecognized..."; create_fpga
-#esac
-#}
-
-
 cl-patches()
 {
 shopt -s extglob
 
 #  Excluded Clear Linux patches
 
-cl_distro="*-Increase-the-ext4-default-commit-age.patch|"
-# > (DISTRO TWEAK -- NOT FOR UPSTREAM)
-cl_distro+="*-bootstats-add-printk-s-to-measure-boot-time-in-more-.patch|"
+cl_distro="*-bootstats-add-printk-s-to-measure-boot-time-in-more-.patch|"
 # > Few distro-tweaks to add printk's to visualize boot time better
 cl_distro+="*-init-wait-for-partition-and-retry-scan.patch|"
 # Adds a wait period for Clear Linux because it boots too fast
@@ -108,29 +78,36 @@ cl_distro+="*-Migrate-some-systemd-defaults-to-the-kernel-defaults.patch|"
 # > These settings are needed to prevent networking issues when the networking modules come up by default without explicit settings
 cl_distro+="*-add-scheduler-turbo3-patch.patch|"
 # Doesn't work for non CL distros
-#cl_distro+="*-use-lfence-instead-of-rep-and-nop.patch|" ## pause does not serialize on AMD, therefore rep/nop do not either afaik
-# ~~Need to determine if this is already resolved in another way/performance impact.  https://spectreattack.com/spectre.pdf https://newsroom.intel.com/wp-content/uploads/sites/11/2018/01/Intel-Analysis-of-Speculative-Execution-Side-Channels.pdf~~
-cl_distro+="*-zero-extra-registers.patch|"
-# Requires GCC patch. https://github.com/clearlinux-pkgs/gcc/blob/master/zero-regs-gcc8.patch
+
 cl_distro+="*-x86-microcode-Force-update-a-uCode-even-if-the-rev-i.patch|"
 # Intel specific? Unsure of the need for this.
 cl_distro+="*-x86-microcode-echo-2-reload-to-force-load-ucode.patch|"
 # Same as above.
 cl_distro+="*-fix-bug-in-ucode-force-reload-revision-check.patch|"
 # Same as above.
-cl_distro+="*-staging-exfat-add-exfat-filesystem-code-to-staging.patch|"
-# I haven't looked into it but I think this has been upstreamed already
-cl_distro+="*-driver-core-add-dev_groups-to-all-drivers.patch|"
-# Doesn't patch
-cl_distro+="*-Revert-iwlwifi-assign-directly-to-iwl_trans-cfg-in-Q.patch|"
-# Doesn't need to be reverted?
-cl_distro+="*drm-i915*.patch|"
-# Very niche cases, there does not seem to be a need for this unless you own a new version of anything that uses the i915 drivers
-cl_distro+="*WireGuard-fast-modern-secure-kernel-VPN-tunnel.patch|"
-# pf-kernel merged
-cl_distro+="*-add-workaround-for-binutils-optimization.patch"
-# x86_64-pc-linux-gnu/bin/as: unrecognized option '-mbranches-within-no-boundaries'
-# Patches to recompile binutils with here: https://github.com/clearlinux-pkgs/binutils
+
+#cl_distro+="*-use-lfence-instead-of-rep-and-nop.patch|" ## pause does not serialize on AMD, therefore rep/nop do not either afaik
+# ~~Need to determine if this is already resolved in another way/performance impact.  https://spectreattack.com/spectre.pdf https://newsroom.intel.com/wp-content/uploads/sites/11/2018/01/Intel-Analysis-of-Speculative-Execution-Side-Channels.pdf~~
+
+#[[ -z $(gcc -shared -mzero-caller-saved-regs=used /dev/null -o /dev/null) ]] &&
+cl_distro+="*-zero-extra-registers.patch|"
+# Requires GCC patch. https://github.com/clearlinux-pkgs/gcc/blob/master/zero-regs-gcc8.patch
+
+
+[[ -z $(grep 'ck' './version') ]] &&
+cl_distro+="*-WireGuard-fast-modern-secure-kernel-VPN-tunnel.patch|"
+# pf-kernel merged, ck did not
+
+[[ -z "$(as -mbranches-within-no-boundaries --warn /dev/null >/dev/null 2>&1)" ]] &&
+cl_distro+="*-add-workaround-for-binutils-optimization.patch|"
+# binutils's assembler needs a patch from https://github.com/clearlinux-pkgs/binutils/
+# This patch is no longer included in their binutils or kernel's patchset
+# I could not find "mbranches-within-no-boundaries" nor "OPTION_MBRANCHES_WITH_NO_BOUNDARIES" anywhere on the internet besides GitHub
+
+cl_distro+="*-Increase-the-ext4-default-commit-age.patch"
+# > (DISTRO TWEAK -- NOT FOR UPSTREAM) | Moved to the bottom so the last patch will never have "|" appended
+
+
 
 CLEAR=($(cd submodules/clear; ls !(${cl_distro}) | grep -v 'fpga\|^CVE\|.*patch\-\|perfbias' | grep '^.*\.patch'; cd $OLDPWD))
 echo -e "Clear Linux patches"
@@ -184,7 +161,6 @@ done
 
 # The functions are separate to prevent spamming of patchsets
 cve-patches && create_cve
-#fpga-patches && create_fpga
 cl-patches && create_clr
 
 
