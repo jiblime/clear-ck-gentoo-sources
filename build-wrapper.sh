@@ -11,19 +11,19 @@ make -j$(cat /proc/cpuinfo | grep processor | wc -l) \
 
 read -p "Did it work?"
 
-echo  "Deleting `uname -r` from /boot without regex (moving config to /tmp just in case)"
+#echo  "Deleting `uname -r` from /boot without regex (moving config to /tmp just in case)"
 
-mv "/boot/config-`uname -r`" "/tmp/" -v
-rm "/boot/initramfs-`uname -r`.img" -v
-rm "/boot/vmlinuz-`uname -r`" -v
-rm "/boot/System.map-`uname -r`" -v
+#mv "/boot/config-`uname -r`" "/tmp/" -v
+#rm "/boot/initramfs-`uname -r`.img" -v
+#rm "/boot/vmlinuz-`uname -r`" -v
+#rm "/boot/System.map-`uname -r`" -v
 
 # Only for systems that have modules at /lib/modules
 
-echo "Removing /lib/modules/`uname -r`"
+##echo "Removing /lib/modules/`uname -r`"
 
-rm -r "/lib/modules/`uname -r`" -v
+#rm -r "/lib/modules/`uname -r`" -v
 
 make modules_install install -j$(cat /proc/cpuinfo | grep processor | wc -l)
 
-dracut --xz --fstab -f
+#dracut --xz --fstab -f
