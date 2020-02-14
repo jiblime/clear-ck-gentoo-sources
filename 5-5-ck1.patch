@@ -843,7 +843,7 @@ index 6a01b073915e..dd1876725cef 100644
  
 +CKVERSION = -ck1
 +CKNAME = MuQSS Powered
-+EXTRAVERSION := $(EXTRAVERSION)$(CKVERSION)
++EXTRAVERSION += $(CKVERSION)
 +
  # We are using a recursive build, so we need to do a little thinking
  # to get the ordering right.
