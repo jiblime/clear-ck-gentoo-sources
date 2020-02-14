@@ -35,6 +35,7 @@ echo -e "Clear Linux's patches for $version.\n"
 
 cve-patches()
 {
+#rm submodules/clear/CVE-2019-19054.patch # This whole script needs to be better, this is a terrible way to do things
 CVE=$(cd submodules/clear; ls | grep '^CVE.*\.patch'; cd $OLDPWD)
 echo -e "CVE patches\n${CVE}\n"
 }
@@ -59,32 +60,32 @@ esac
 }
 
 
-fpga-patches()
-{
-FPGA=$(cd submodules/clear; ls | grep 'fpga.*\.patch'; cd $OLDPWD)
-echo -e "FPGA patches\n${FPGA}\n"
-}
-
-# TODO: Combine create_fpga and cl-patches to make using this less troublesome.
-# CVE patches are excluded because of how fast they may be included in upstream
-create_fpga()
-{
-echo -e "Field-programmable gate array\nUnlikely that you have this, but adding these patches won't do any harm"
-read -p "Include FPGA patches?[Y/n] " create_fpga
-echo -e "User generated at: $(date)" > submodules/.generated/0002-CL-FPGA.patch
-
-case "${create_fpga}" in
-	[Yy]* | '')
-		cat submodules/clear/*fpga*.patch >> submodules/.generated/0002-CL-FPGA.patch && echo -e "\n\e[32mAdded FPGA patches.\e[0m\n"
-		;;
-	[Nn]*)
-		echo -e "\n\e[31mNot adding FPGA patches and removing older patches.\e[0m\n"
-		rm submodules/.generated/0002-CL-FPGA.patch
-		;;
-	*)
-		echo "Input unrecognized..."; create_fpga
-esac
-}
+#fpga-patches()
+#{
+#FPGA=$(cd submodules/clear; ls | grep 'fpga.*\.patch'; cd $OLDPWD)
+#echo -e "FPGA patches\n${FPGA}\n"
+#}
+#
+## TODO: Combine create_fpga and cl-patches to make using this less troublesome.
+## CVE patches are excluded because of how fast they may be included in upstream
+#create_fpga()
+#{
+#echo -e "Field-programmable gate array\nUnlikely that you have this, but adding these patches won't do any harm"
+#read -p "Include FPGA patches?[Y/n] " create_fpga
+#echo -e "User generated at: $(date)" > submodules/.generated/0002-CL-FPGA.patch
+#
+#case "${create_fpga}" in
+#	[Yy]* | '')
+#		cat submodules/clear/*fpga*.patch >> submodules/.generated/0002-CL-FPGA.patch && echo -e "\n\e[32mAdded FPGA patches.\e[0m\n"
+#		;;
+#	[Nn]*)
+#		echo -e "\n\e[31mNot adding FPGA patches and removing older patches.\e[0m\n"
+#		rm submodules/.generated/0002-CL-FPGA.patch
+#		;;
+#	*)
+#		echo "Input unrecognized..."; create_fpga
+#esac
+#}
 
 
 cl-patches()
@@ -125,6 +126,8 @@ cl_distro+="*-Revert-iwlwifi-assign-directly-to-iwl_trans-cfg-in-Q.patch|"
 # Doesn't need to be reverted?
 cl_distro+="*drm-i915*.patch|"
 # Very niche cases, there does not seem to be a need for this unless you own a new version of anything that uses the i915 drivers
+cl_distro+="*WireGuard-fast-modern-secure-kernel-VPN-tunnel.patch|"
+# pf-kernel merged
 cl_distro+="*-add-workaround-for-binutils-optimization.patch"
 # x86_64-pc-linux-gnu/bin/as: unrecognized option '-mbranches-within-no-boundaries'
 # Patches to recompile binutils with here: https://github.com/clearlinux-pkgs/binutils
@@ -181,7 +184,7 @@ done
 
 # The functions are separate to prevent spamming of patchsets
 cve-patches && create_cve
-fpga-patches && create_fpga
+#fpga-patches && create_fpga
 cl-patches && create_clr
 
 
