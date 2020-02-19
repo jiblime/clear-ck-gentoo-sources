@@ -1,7 +1,7 @@
 # Reordered to aid in incremental patching with regards to the kernel itself, Clear Linux, and zenpower
 # Patches not appended with _5.5 in misc likely will not require to be changed on new kernel released
 5-5-ck1.patch
-5.5.4.patch
+5.5.3.patch
 
 genpatches/1500_XATTR_USER_PREFIX.patch
 genpatches/1510_fs-enable-link-security-restrictions-by-default.patch
@@ -12,9 +12,6 @@ genpatches/4567_distro-Gentoo-Kconfig.patch
 
 misc/000-experimental-x86-64-opts.patch
 # Enables native -O3 compilation support, switched 32bit arch fromo i386 to i686 (for pf-kernel the -O3 compile is already enabled)
-
-#misc/001-iwd-rfkill_5.4.patch
-# Intel's iwd rfkill switch fix
 
 misc/002-enable_additional_cpu_optimizations_for_gcc_v9.1+_kernel_v5.5+.patch
 # Option to optimize for your hardware. I personally recommend native.
@@ -28,7 +25,11 @@ misc/004-async-futex1_5.4.patch
 misc/005-async-futex2_5.4.patch
 # Asynchronous futex part 2
 
-misc/006-Add-git-version-of-zenpower-as-a-builtin-module.patch
+#misc/006-treewide-awk-5.0-over-escaping-fix_5.4.patch
+# Removes unneeded escaping for awk >=5.0
+# Needs fixing. Removing in case fixes have been upstreamed
+
+misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
 # Builds a master branch version of a user maintained module for Ryzen processors in kernel
 
 submodules/.generated/clear.patch
@@ -36,21 +37,12 @@ submodules/.generated/clear.patch
 #end_of_kernel_reserve-revert.patch # Use this to bypass the building tools for checking if the linker is gold
 # 5.5.3 fixes issues with 5.5.2 regarding iwlwifi and 3168 devices
 
-misc/008-linux-acs-override_5.4.10.patch
+misc/009-linux-acs-override_5.4.10.patch
 # ACS override for AMD motherboards. Source: https://queuecumber.gitlab.io/linux-acs-override/
 # TODO: Pull latest version via patch-generator
 
-misc/009-remove-yield-from-MuQSS_5.5.patch
-# Should speed up the kernel
-# https://github.com/zen-kernel/zen-kernel/commit/d1bebeb959a56324fe436443ea2f21a8391632d9
-
-#misc/010-iwlwifi-mvm-3168-PHY_SKU-NVM-fix_5.5.patch
+misc/010-iwlwifi-mvm-3168-PHY_SKU-NVM-fix_5.5.patch
 # Do not require PHY_SKU NVM section for 3168 devices
 # https://patchwork.kernel.org/patch/11353871/
 # > The only person who really understand what goes on here is Luca
 # Don't expect an explanation for this one
-
-
-misc/011-add-cake-as-a-default-qdisc.patch
-# https://lwn.net/Articles/758353/
-# ./net/sched/sch_cake.c
