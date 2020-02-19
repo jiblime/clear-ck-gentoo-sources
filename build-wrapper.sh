@@ -7,6 +7,9 @@ export PJOB="$(cat /proc/cpuinfo | grep processor | wc -l)"
 export RUNNING_KVER="$(uname -r)"
 export CURR_KVER="$(file /usr/src/linux/arch/x86/boot/bzImage | sed 's/^.*version\ //g ; s/\ .*//g')"
 
+umount /tmp/fslinux ; rmdir /tmp/fslinux
+cd /usr/src/linux
+
 make_kernel(){
 
 make -j"${PJOB}" \
