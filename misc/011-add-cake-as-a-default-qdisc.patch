@@ -1,3 +1,7 @@
+Doesn't change it according to 'tc -d qdisc'
+
+---
+
 --- a/net/sched/Kconfig
 +++ b/net/sched/Kconfig
 @@ -432,6 +432,9 @@ choice
