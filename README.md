@@ -20,7 +20,7 @@ Now there is a splinter branch for the BMQ scheduler by Alfred Chen, using Oleks
 
 **5.** ocerman's zenpower module is an in kernel module now so there will be no need to sign it or rebuild it after creating a new kernel.
 
-**/6/7/etc.** Random patches I've piled in to test. Read the heads of each patch to get a URL to patch source and some information. The (now) unmaintainted it87.c replacement is *still* much further ahead in development than the in-kernel version. 
+**/6/7/etc.** Random patches I've piled in to test. Read the series or heads of each patch to get a URL to patch source and some information. The (now) unmaintainted it87.c replacement is *still* much further ahead in development than the in-kernel version. 
 
 
 BMQ/pf-kernel patchsets:
@@ -80,15 +80,15 @@ https://gitlab.com/post-factum/uksmd
 
 Examples of different ways to attain the two-point release kernel:
 
-`wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.3.tar.xz`
+`wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.5.tar.xz`
 
-`git clone --branch v5.3 https://github.com/torvalds/linux.git linux-5.3-ck1`
+`git clone --branch v5.5 https://github.com/torvalds/linux.git linux-5.5-ck1`
 
-`git clone https://github.com/torvalds/linux.git linux-git ; cd linux-git ; git checkout v5.3`
+`git clone https://github.com/torvalds/linux.git linux-git ; cd linux-git ; git checkout v5.5`
 
 [Bare 5.2.0 Linux kernel](https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.2.tar.xz)
 
-[Bare 5.3.0 Linux kernel](https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.3.tar.xz)
+[Bare 5.5.0 Linux kernel](https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.5.tar.xz)
 
 # Notes:
 
@@ -103,9 +103,9 @@ Examples of different ways to attain the two-point release kernel:
 
 - Note: 5.3 has introduced `CONFIG_RQ_LLC` for CPUs with multiple last level caches which many new processors have; worth testing!
 
--  `CONFIG_FORCE_IRQ_THREADING is not set`: This is only needed for those who are unable to boot when `CONFIG_FORCE_IRQ_THREADING=Y`, and is off by default.
+-  `CONFIG_FORCE_IRQ_THREADING is not set`: This is only needed for those who are unable to boot when `CONFIG_FORCE_IRQ_THREADING=Y`, and is off by default. Users should try first try booting a kernel with it set on
 
-- BMQ notes: When switching schedulers, remember to run `make oldconfig`; CONFIG_SCHED_TIMESLICE isn't recommended to be tuned yet; CONFIG_HZ is dependent on application, vs. the recommended 100Hz for MuQSS
+- BMQ notes: When switching schedulers, remember to run `make oldconfig`;  CONFIG_HZ is dependent on application, vs. the recommended 100Hz for MuQSS; read [this](https://cchalpha.blogspot.com/2020/02/bmq-v55-r1-release.html) for notes on kernel param bmq.timeslice
 
 
 ## Gentoo Example Installation (WIP)
@@ -114,26 +114,18 @@ Examples of different ways to attain the two-point release kernel:
 
 emerge -avu quilt dev-vcs/git  #  Optionally run `perl-cleaner --really-all` afterwards if Perl was upgraded
 
-wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.3.tar.xz
-xz -df linux-5.3.tar.xz && tar xpf linux-5.3.tar && rm linux-5.3.tar
+wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.5.tar.xz
+xz -df linux-5.5.tar.xz && tar xpf linux-5.5.tar && rm linux-5.5.tar
 
-mv linux-5.3 linux-5.3-ck1
-eselect kernel set linux-5.3-ck1
+mv linux-5.5 linux-5.5-ck1
+eselect kernel set linux-5.5-ck1
 cd /usr/src/linux
 
 git clone --recurse-submodules https://github.com/jiblime/clear-ck-gentoo-sources.git patches && cd patches
 -or-
 git clone https://github.com/jiblime/clear-ck-gentoo-sources.git patches && cd patches
-git submodule update --init
 
-To checkout the latest tag for a submodule instead of a random branch:
-cd submodules/clear
-git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
-
-And the same for submodules/zenpower
-
-
-./patch-generator.sh
+./patch-generator.sh # Will automatically fetch and update the submodules, be sure to run this before applying patches and do not update until patches are removed
 
 # Below is a simple script to get your current .config into the directory quickly if you need one provided.
 # It first checks /proc/config.gz then /boot. All you need to do is copy/paste it into terminal.
@@ -148,7 +140,7 @@ elif
 	echo mv -iv /tmp/.config /usr/src/linux ;
 fi
 
-# You'll still need to update the config. `make oldconfig` works. Run `make help` to view more options.
+# You'll still need to update the config. `make oldconfig` works. Run `make help` to view more options and 'make listnewconfig' to view the new configurations.
 
 make oldconfig
 
@@ -166,4 +158,3 @@ emerge @module-rebuild
 dracut --kver $(file /usr/src/linux/arch/x86/boot/bzImage | sed 's/^.*version\ //g ; s/\ .*//g') --xz --fstab
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
-
