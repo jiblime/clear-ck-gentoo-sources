@@ -7,28 +7,32 @@ export PJOB="$(cat /proc/cpuinfo | grep processor | wc -l)"
 export RUNNING_KVER="$(uname -r)"
 export CURR_KVER="$(file /usr/src/linux/arch/x86/boot/bzImage | sed 's/^.*version\ //g ; s/\ .*//g')"
 
-umount /tmp/fslinux ; rmdir /tmp/fslinux
 cd /usr/src/linux
 
 make_kernel(){
 
-make -j"${PJOB}" \
-        KCFLAGS="-fgraphite-identity -floop-nest-optimize \
-	-ftree-vectorize -floop-parallelize-all \
-        --param=large-stack-frame-growth=2048 --param=inline-min-speedup=9 \
-        -finline-functions -flimit-function-alignment \
-        --param=loop-block-tile-size=121 --param=vect-epilogues-nomask=1 \
-        -malign-data=cacheline -mtls-dialect=gnu2 \
-        --param=max-unroll-times=2 -fno-tree-loop-distribute-patterns \
-        --param=max-unrolled-insns=32 --param=max-average-unrolled-insns=16" && return || exit 1
+#make -j"${PJOB}" \
+#        KCFLAGS="-fgraphite-identity -floop-nest-optimize \
+#	-ftree-vectorize -floop-parallelize-all \
+ #       -finline-functions -flimit-function-alignment \
+  #      --param=loop-block-tile-size=121 --param=vect-epilogues-nomask=1 \
+   #     -malign-data=cacheline -mtls-dialect=gnu2 \
+    #    --param=max-unroll-times=2 -fno-tree-loop-distribute-patterns \
+     #   --param=max-unrolled-insns=32 --param=max-average-unrolled-insns=16 \
+      #  -fvect-cost-model=unlimited -fno-tree-loop-distribute-patterns " && return || exit 1
+#make -j"${PJOB}" KCFLAGS="-fgraphite-identity -floop-nest-optimize -fno-tree-loop-distribute-patterns -flimit-function-alignment" && return || exit 1
+make -j"${PJOB}" KCFLAGS="-fgraphite-identity -floop-nest-optimize -fno-tree-loop-distribute-patterns -flimit-function-alignment"
 }
 
 poof_old(){
 
-read -p "Remove running kernel from /boot and /lib/modules? [y/n] " poof
+export RUNNING_KVER="$(uname -r)"
+export CURR_KVER="$(file /usr/src/linux/arch/x86/boot/bzImage | sed 's/^.*version\ //g ; s/\ .*//g')"
+
+read -p "Remove running kernel from /boot and /lib/modules? [y/N] " poof
 
 case "${poof}" in
-        [Yy]* | '')
+        [Yy]*)
 		echo -e "Deleting ${RUNNING_KVER}, moving /boot/${RUNNING_KVER}.config to /tmp"
 		mv -v "/boot/config-`uname -r`" "/tmp/"
 		rm -v "/boot/initramfs-${RUNNING_KVER}.img"
@@ -36,7 +40,7 @@ case "${poof}" in
 		rm -v "/boot/System.map-${RUNNING_KVER}"
 		rm -rv "/lib/modules/${RUNNING_KVER}"
                 ;;
-        [Nn]*)
+        [Nn]* | '')
 		if [[ "${RUNNING_KVER}" = "${CURR_KVER}" ]] ; then
 			echo -e "The running kernel and compiled kernel have the same kernel release. Select yes to remove or abort the script" ; poof_old
 		else
@@ -59,16 +63,17 @@ export CURR_KVER="$(file /usr/src/linux/arch/x86/boot/bzImage | sed 's/^.*versio
 make modules_install install -j"${PJOB}" ||
 echo -e "Skipping installation in /lib/modules/${CURR_KVER} as it already exists\n"
 
-echo -e "Send SIGINT to skip module-rebuild and continue build-wrapper.sh"
-emerge -1av @module-rebuild
+#echo -e "Send SIGINT to skip module-rebuild and continue build-wrapper.sh"
+#emerge -1av @module-rebuild
 
 if [[ -n $(command -v dracut) ]] ; then
 	dracut --kver "${CURR_KVER}" --lz4 --fstab -f
 else
 	echo -e "dracut is not installed in the current system"
 fi
+}
 
-
+copy_conf() {
 if [[ -e "/boot/loader/entries/Gentoo-${RUNNING_KVER}.conf" ]] && [[ -n $(command -v bootctl) ]] ; then
 	cp -v "/boot/loader/entries/Gentoo-${RUNNING_KVER}.conf" "/boot/loader/entries/Gentoo-${CURR_KVER}.conf" &&
 	sed -i "s/${RUNNING_KVER}/${CURR_KVER}/g" "/boot/loader/entries/Gentoo-${CURR_KVER}.conf" &&
@@ -91,8 +96,11 @@ fi
 }
 
 
+
 make_kernel
 
 poof_old
 
 install_kernel
+
+copy_conf

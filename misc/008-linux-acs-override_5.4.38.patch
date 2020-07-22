@@ -18,14 +18,12 @@ index a84a83f8881e..7d3517aaaebe 100644
  		noioapicquirk	[APIC] Disable all boot interrupt quirks.
  				Safety option to keep boot IRQs enabled. This
  				should never be necessary.
-diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
-index 320255e5e8f8..d4aaf74c54df 100644
 --- a/drivers/pci/quirks.c
 +++ b/drivers/pci/quirks.c
-@@ -3483,6 +3483,106 @@ static void quirk_no_bus_reset(struct pci_dev *dev)
+@@ -3544,6 +3544,106 @@ static void quirk_no_bus_reset(struct pc
  	dev->dev_flags |= PCI_DEV_FLAGS_NO_BUS_RESET;
  }
-
+ 
 +static bool acs_on_downstream;
 +static bool acs_on_multifunction;
 +
@@ -129,11 +127,3 @@ index 320255e5e8f8..d4aaf74c54df 100644
  /*
   * Some Atheros AR9xxx and QCA988x chips do not behave after a bus reset.
   * The device will throw a Link Down error on AER-capable systems and
-@@ -4663,6 +4763,7 @@ static const struct pci_dev_acs_enabled {
- 	{ PCI_VENDOR_ID_BROADCOM, 0xD714, pci_quirk_brcm_acs },
- 	/* Amazon Annapurna Labs */
- 	{ PCI_VENDOR_ID_AMAZON_ANNAPURNA_LABS, 0x0031, pci_quirk_al_acs },
-+   { PCI_ANY_ID, PCI_ANY_ID, pcie_acs_overrides },
- 	{ 0 }
- };
-

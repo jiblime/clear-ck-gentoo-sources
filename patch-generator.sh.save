@@ -1,22 +1,26 @@
 #!/bin/bash
 
+echo -e "Remember to remove all patches prior to updating them"
+
 update_mods() {
 	git submodule update --force --remote --quiet
+git show -s --format=%ci
+	echo -e "\nZenpower submodule $(git -C submodules/zenpower describe --tags): \c"
 
-	echo -e "\nZenpower: "$(git -C submodules/zenpower describe --tags)"\nCommit date: "$(git -C submodules/zenpower show -s --format=%ci)"\c"
-	echo -e "\nClear Linux: "$(git -C submodules/clear describe --tags)"\nCommit date: "$(git -C submodules/clear show -s --format=%ci)"\c"
-	echo -e "\n---\n"
+	echo -e "\nClear Linux submodule at: \c"
+	git -C submodules/clear describe --tags
+
 }
 update_mods
 
 # For Ryzen 3000 voltage/temp/clock detection.
 
 if [[ -f submodules/zenpower/zenpower.c ]] ; then
-	cp submodules/.zenpower-skel/zenpower.skel misc/006-Add-git-version-of-zenpower-as-a-builtin-module.patch
-	echo "@@ -0,0 +1,$(cat submodules/zenpower/zenpower.c | wc -l) @@" >> misc/006-Add-git-version-of-zenpower-as-a-builtin-module.patch
+	cp submodules/.zenpower-skel/zenpower.skel misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
+	echo "@@ -0,0 +1,$(cat submodules/zenpower/zenpower.c | wc -l) @@" >> misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
 	cp submodules/zenpower/zenpower.c submodules/.zenpower-skel/zenpower.potch
 	sed -i 's/^/+/g' submodules/.zenpower-skel/zenpower.potch
-	cat submodules/.zenpower-skel/zenpower.potch  >> misc/006-Add-git-version-of-zenpower-as-a-builtin-module.patch
+	cat submodules/.zenpower-skel/zenpower.potch  >> misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
 fi
 #	ls --color=always misc/008-Add-git-version-of-zenpower-as-a-builtin-module.patch
 #	echo -e "Created the freshest zenpower built in module available, courtesy of:"
@@ -32,18 +36,12 @@ fi
 
 #version=$(cat submodules/clear/upstream | sed 's/^.*\-//g; s/\.tar\.xz//g')
 #echo -e "Clear Linux's patches for $version.\n"
+echo "---"
 
 cve-patches()
 {
 CVE=$(cd submodules/clear; ls | grep '^CVE.*\.patch'; cd $OLDPWD)
-
-if [[ -z "${CVE}" ]] ; then
-	echo -e "No CVE patches to apply, continuing\n"
-	return
-else
-	echo -e "CVE patches\n${CVE}\n"
-	create_cve
-fi
+echo -e "CVE patches\n${CVE}\n"
 }
 
 create_cve()
@@ -51,7 +49,6 @@ create_cve()
 echo -e "CVE patches are patches made to fix security issues in the kernel"
 read -p "Include CVE patches?[Y/n] " create_cve
 echo -e "User generated at: $(date)" > submodules/.generated/0001-CL-CVE.patch
-echo -e "Tag: $(git -C submodules/clear describe --tags)"
 
 case "${create_cve}" in
 	[Yy]* | '')
@@ -102,10 +99,6 @@ cl_distro+="*-fix-bug-in-ucode-force-reload-revision-check.patch|"
 cl_distro+="*-zero-extra-registers.patch|"
 # Requires GCC patch. https://github.com/clearlinux-pkgs/gcc/blob/master/zero-regs-gcc8.patch
 
-cl_distro+="*-gcc-10-warnings-fix-low-hanging-fruit.patch|"
-cl_distro+="*-Stop-the-ad-hoc-games-with-Wno-maybe-initialized.patch|"
-cl_distro+="*gcc-10*|"
-# In 5.4.41
 
 [[ -z $(grep 'ck' './version') ]] &&
 cl_distro+="*-WireGuard-fast-modern-secure-kernel-VPN-tunnel.patch|"
@@ -117,10 +110,10 @@ cl_distro+="*-add-workaround-for-binutils-optimization.patch|"
 # This patch is no longer included in their binutils or kernel's patchset
 # I could not find "mbranches-within-no-boundaries" nor "OPTION_MBRANCHES_WITH_NO_BOUNDARIES" anywhere on the internet besides GitHub
 
-cl_distro+="*-Increase-the-ext4-default-commit-age.patch|"
+cl_distro+="*-Increase-the-ext4-default-commit-age.patch"
 # > (DISTRO TWEAK -- NOT FOR UPSTREAM) | Moved to the bottom so the last patch will never have "|" appended
 
-cl_distro+="archive"
+
 
 CLEAR=($(cd submodules/clear; ls !(${cl_distro}) | grep -v 'fpga\|^CVE\|.*patch\-\|perfbias' | grep '^.*\.patch'; cd $OLDPWD))
 echo -e "Clear Linux patches"
@@ -147,7 +140,6 @@ create_clr()
 {
 read -p "Include the rest of the Clear Linux patches? (Recommended)[Y/n] " create_clr
 echo -e "User generated at: $(date)" > submodules/.generated/0003-CL-CLR.patch
-echo -e "Tag: $(git -C submodules/clear describe --tags)"
 
 case "${create_clr}" in
 	[Yy]* | '')
@@ -174,7 +166,7 @@ done
 
 
 # The functions are separate to prevent spamming of patchsets
-cve-patches
+cve-patches && create_cve
 cl-patches && create_clr
 
 
