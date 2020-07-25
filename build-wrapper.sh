@@ -21,7 +21,7 @@ make_kernel(){
      #   --param=max-unrolled-insns=32 --param=max-average-unrolled-insns=16 \
       #  -fvect-cost-model=unlimited -fno-tree-loop-distribute-patterns " && return || exit 1
 #make -j"${PJOB}" KCFLAGS="-fgraphite-identity -floop-nest-optimize -fno-tree-loop-distribute-patterns -flimit-function-alignment" && return || exit 1
-make -j"${PJOB}" KCFLAGS="-fgraphite-identity -floop-nest-optimize -fno-tree-loop-distribute-patterns -flimit-function-alignment"
+make -j"${PJOB}" KCFLAGS="-fgraphite-identity -floop-nest-optimize -fno-tree-loop-distribute-patterns -flimit-function-alignment -fno-unroll-loops -malign-data=cacheline"
 }
 
 poof_old(){

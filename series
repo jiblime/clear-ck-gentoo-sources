@@ -24,15 +24,38 @@ genpatches/5007_ZSTD-v5-8-8-gitignore-add-ZSTD-compressed-files.patch
 
 
 misc/000-experimental-x86-64-opts.patch
+#misc/001-iwd-rfkill_5.4+.patch
 misc/002-enable_additional_cpu_optimizations_for_gcc_v10.1+_kernel_v5.7+.patch
-misc/003-better-it87-detection_5.4.patch
-misc/004-async-futex1_5.4.patch
-misc/005-async-futex2_5.4.patch
+
+# This will always be better than the in-kernel module, for users with ITE sensors
+misc/003-better-it87-detection_5.4+.patch
+
+# Futex operations for better WINE performance
+misc/004-futex-zenkernel.patch
+misc/005-futex-proton-compat-zenkernel.patch
+
+# For Ryzen procoessors
 misc/006-Add-git-version-of-zenpower-as-a-builtin-module.patch
-misc/007-amd-iommu-fix_5.4.patch
-misc/008-acso.patch
+
+# For AMD motherboards having issues with IOMMU grouping
+misc/007-amd-iommu-fix_5.4+.patch
+# pcie_acs_override=downstream,multifunction
+misc/008-acs-override.patch
+
+
+# This edits a MuQSS tunable
 misc/009-remove-yield-from-MuQSS_5.5.patch
+
+# Removes the config leak message
 misc/010-fix-build-error-on-config-leak.patch
+
+# This fixes a build error introduced in ~5.7.2
 misc/011-fix-broken-compile-5.7.2.patch
-misc/012-muqss-fix-hang-on-suspend.patch
-misc/013-muqss-fix-cpufreq_cooling-build.patch
+
+# Untested
+#misc/012-muqss-fix-hang-on-suspend.patch
+#misc/013-muqss-fix-cpufreq_cooling-build.patch
+
+# Linux-tkg patches, base is for general performance/additions, hardened doesn't apply cleanly
+linux57-tkg-patches/0003-glitched-base.patch
+#linux57-tkg-patches/0012-linux-hardened.patch
