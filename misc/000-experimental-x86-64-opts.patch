@@ -91,13 +91,13 @@ Index: linux/arch/x86/Makefile
  
          # Don't autogenerate traditional x87 instructions
          KBUILD_CFLAGS += $(call cc-option,-mno-80387)
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1272,7 +1272,6 @@ config CC_OPTIMIZE_FOR_PERFORMANCE
- 
- config CC_OPTIMIZE_FOR_PERFORMANCE_O3
- 	bool "Optimize more for performance (-O3)"
--	depends on ARC
- 	help
- 	  Choosing this option will pass "-O3" to your compiler to optimize
- 	  the kernel yet more for performance.
+#--- a/init/Kconfig
+#+++ b/init/Kconfig
+#@@ -1272,7 +1272,6 @@ config CC_OPTIMIZE_FOR_PERFORMANCE
+# 
+# config CC_OPTIMIZE_FOR_PERFORMANCE_O3
+# 	bool "Optimize more for performance (-O3)"
+#-	depends on ARC
+# 	help
+# 	  Choosing this option will pass "-O3" to your compiler to optimize
+# 	  the kernel yet more for performance.
