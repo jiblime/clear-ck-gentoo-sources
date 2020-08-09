@@ -1,0 +1,21 @@
+diff --git a/init/Kconfig b/init/Kconfig
+index 44bba8466..588c5b6c6 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1259,7 +1259,6 @@ config CC_OPTIMIZE_FOR_PERFORMANCE
+ 
+ config CC_OPTIMIZE_FOR_PERFORMANCE_O3
+ 	bool "Optimize more for performance (-O3)"
+-	depends on ARC
+ 	help
+ 	  Choosing this option will pass "-O3" to your compiler to optimize
+ 	  the kernel yet more for performance.
+@@ -1336,8 +1335,6 @@ config BPF
+ 
+ menuconfig EXPERT
+ 	bool "Configure standard kernel features (expert users)"
+-	# Unhide debug options, to make the on-by-default options visible
+-	select DEBUG_KERNEL
+ 	help
+ 	  This option allows certain base kernel options and settings
+ 	  to be disabled or tweaked. This is for specialized
