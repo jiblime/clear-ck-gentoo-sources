@@ -1,0 +1,13 @@
+--- patch-5.7.14
++++ patch-5.7.14
+@@ -66304,9 +66304,9 @@ index a5221abb4594..721d5af8cfc7 100644
+ --- a/kernel/time/timer.c
+ +++ b/kernel/time/timer.c
+ @@ -43,6 +43,7 @@
+- #include <linux/sched/debug.h>
+  #include <linux/slab.h>
+  #include <linux/compat.h>
++ #include <linux/freezer.h>
+ +#include <linux/random.h>
+  
+  #include <linux/uaccess.h>
