@@ -1,10 +1,6 @@
-.series
 submodules/.zenpower-skel/zenpower.potch
 submodules/.generated/0001-CL-CVE.patch
 submodules/.generated/0002-CL-FPGA.patch
 submodules/.generated/0003-CL-CLR.patch
 
-oldpatches/
-.notes
-build-wrapper.sh
-.super-secret-patch.patch
+.series
