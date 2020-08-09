@@ -1,0 +1,16 @@
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index 2371292f3..dfcf5ce22 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -1491,7 +1491,11 @@ static struct cpuhp_step cpuhp_hp_states[] = {
+ 	[CPUHP_OFFLINE] = {
+ 		.name			= "offline",
+ 		.startup.single		= NULL,
++#ifdef CONFIG_SCHED_MUQSS
+ 		.teardown.single	= NULL,
++#else
++		.teardown.single	= finish_cpu,
++#endif
+ 	},
+ #ifdef CONFIG_SMP
+ 	[CPUHP_CREATE_THREADS]= {
