@@ -1,9 +1,15 @@
-# Reordered to aid in incremental` patching with regards to the kernel itself, Clear Linux, and zenpower
-# Patches not appended with _5.5 in misc likely will not require to be changed on new kernel released
-5.7-ck1.patch
-5.7.10.patch
+# -ck1 patches with fixes
+# Source: https://ck-hack.blogspot.com/
+ck/5.7-ck1.patch
+ck/010-fix-build-error-on-config-leak.patch
+ck/011-muqss-fix-cpufreq_cooling-build.patch
+ck/012-muqss-fix-hang-on-suspend.diff
 
-#genpatches/0000_README
+# Incremental patch
+incremental_patches/patch-5.7.14-2
+
+# Gentoo distro patches
+# Source: https://dev.gentoo.org/~mpagano/genpatches/trunk/
 genpatches/1500_XATTR_USER_PREFIX.patch
 genpatches/1510_fs-enable-link-security-restrictions-by-default.patch
 genpatches/2000_BT-Check-key-sizes-only-if-Secure-Simple-Pairing-enabled.patch
@@ -11,7 +17,9 @@ genpatches/2600_enable-key-swapping-for-apple-mac.patch
 genpatches/2900_tmp513-Fix-build-issue-by-selecting-CONFIG_REG.patch
 genpatches/2910_TVP5150-Fix-build-issue-by-selecting-REGMAP-I2C.patch
 genpatches/2920_sign-file-patch-for-libressl.patch
+# Toggles options for system setups
 genpatches/4567_distro-Gentoo-Kconfig.patch
+# Enables zstd for kernel compression
 genpatches/5000_ZSTD-v5-1-8-prepare-zstd-for-preboot-env.patch
 genpatches/5001_ZSTD-v5-2-8-prepare-xxhash-for-preboot-env.patch
 genpatches/5002_ZSTD-v5-3-8-add-zstd-support-to-decompress.patch
@@ -20,42 +28,37 @@ genpatches/5004_ZSTD-v5-5-8-add-support-for-zstd-compressed-initramfs.patch
 genpatches/5005_ZSTD-v5-6-8-bump-ZO-z-extra-bytes-margin.patch
 genpatches/5006_ZSTD-v5-7-8-support-for-ZSTD-compressed-kernel.patch
 genpatches/5007_ZSTD-v5-8-8-gitignore-add-ZSTD-compressed-files.patch
-#genpatches/5012_enable-cpu-optimizations-for-gcc91.patch
 
+# Clear Linux patches
+# Source: https://github.com/clearlinux-pkgs/linux
+submodules/.generated/clear.patch
 
-misc/000-experimental-x86-64-opts.patch
-#misc/001-iwd-rfkill_5.4+.patch
+# Removed; unsure of benefit from alignment, very certain
+# there are disadvantages to using alignment:
+# https://lore.kernel.org/patchwork/patch/943625/
+#  misc/000-experimental-x86-64-opts.patch
+
+# Unhides -O3 compile option, makes DEBUG_KERNEL optional when selecing CONFIG_EXPERT
+misc/001-unhide-optimize.patch
+
+# [>=GCC 10.1] Enables building with -march=
+# Source: https://github.com/graysky2/kernel_gcc_patch
 misc/002-enable_additional_cpu_optimizations_for_gcc_v10.1+_kernel_v5.7+.patch
 
-# This will always be better than the in-kernel module, for users with ITE sensors
+# Better detection of ITE super I/O chips
+# Mirror: https://github.com/xdarklight/hwmon-it87
 misc/003-better-it87-detection_5.4+.patch
 
-# Futex operations for better WINE performance
+# Patches that would mainly benefit virtualizing Wine
 misc/004-futex-zenkernel.patch
 misc/005-futex-proton-compat-zenkernel.patch
 
-# For Ryzen procoessors
+# Patch to include zenpower as an in-tree module, used with zenmonitor
+# Source: https://github.com/ocerman/zenpower/
 misc/006-Add-git-version-of-zenpower-as-a-builtin-module.patch
 
-# For AMD motherboards having issues with IOMMU grouping
+# Patches for fixing IOMMU grouping when doing hardware passthroughs
+# Source: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF
+# Source: https://queuecumber.gitlab.io/linux-acs-override/
 misc/007-amd-iommu-fix_5.4+.patch
-# pcie_acs_override=downstream,multifunction
 misc/008-acs-override.patch
-
-
-# This edits a MuQSS tunable
-misc/009-remove-yield-from-MuQSS_5.5.patch
-
-# Removes the config leak message
-misc/010-fix-build-error-on-config-leak.patch
-
-# This fixes a build error introduced in ~5.7.2
-misc/011-fix-broken-compile-5.7.2.patch
-
-# Untested
-#misc/012-muqss-fix-hang-on-suspend.patch
-#misc/013-muqss-fix-cpufreq_cooling-build.patch
-
-# Linux-tkg patches, base is for general performance/additions, hardened doesn't apply cleanly
-linux57-tkg-patches/0003-glitched-base.patch
-#linux57-tkg-patches/0012-linux-hardened.patch
