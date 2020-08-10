@@ -1,0 +1,52 @@
+# Enabling link time optimization in the Linux kernel 
+# https://github.com/andikleen/linux-misc/tree/lto-5.8-1
+# https://gist.github.com/telans/728b63dd07c41c9ca6e2ca3d4431db8e
+5.8-lto.patch
+
+# Gentoo distro patches
+# https://dev.gentoo.org/~mpagano/genpatches/trunk/5.8/
+gentoo/1500_XATTR_USER_PREFIX.patch
+gentoo/1510_fs-enable-link-security-restrictions-by-default.patch
+gentoo/2000_BT-Check-key-sizes-only-if-Secure-Simple-Pairing-enabled.patch
+gentoo/2900_tmp513-Fix-build-issue-by-selecting-CONFIG_REG.patch
+gentoo/2910_TVP5150-Fix-build-issue-by-selecting-REGMAP-I2C.patch
+gentoo/2920_sign-file-patch-for-libressl.patch
+gentoo/4567_distro-Gentoo-Kconfig.patch
+
+# pf kernel patch has ZSTD compression
+#gentoo/5000_ZSTD-v10-1-8-prepare-zstd-for-preboot-env.patch
+#gentoo/5001_ZSTD-v10-2-8-prepare-xxhash-for-preboot-env.patch
+#gentoo/5002_ZSTD-v10-3-8-add-zstd-support-to-decompress.patch
+#gentoo/5003_ZSTD-v10-4-8-add-support-for-zstd-compres-kern.patch
+#gentoo/5004_ZSTD-v10-5-8-add-support-for-zstd-compressed-initramfs.patch
+#gentoo/5005_ZSTD-v10-6-8-bump-ZO-z-extra-bytes-margin.patch
+#gentoo/5006_ZSTD-v10-7-8-support-for-ZSTD-compressed-kernel.patch
+#gentoo/5007_ZSTD-v10-8-8-gitignore-add-ZSTD-compressed-files.patch
+#gentoo/5013_enable-cpu-optimizations-for-gcc10.patch
+
+# pf-kernel, a collection of optimization patches
+# https://gitlab.com/post-factum/pf-kernel/-/wikis/README
+pf/v5.8-pf1.diff
+
+
+# Support for the AMD Sensor Fusion Hub, mainly found on Ryzen laptops
+# SFH-Add-Support-for-AMD-Sensor-Fusion-Hub.patch
+
+
+# Add option to use -fno-semantic-interposition and -fdevirtualize-at-ltrans for the final
+# linking processs. This can be used in tandem with LTO_CP_CLONE. 
+# Also maximizes LTO compression
+personal/0004-Add-option-to-use-fno-semantic-interposition-and-fde.patch
+
+# Detect a wider range of ITE brand super I/O chips
+# Mirror: https://github.com/xdarklight/hwmon-it87
+personal/003-better-it87-detection_5.4+.patch
+# Turn unknown ITE chip revision into info msg
+personal/0009-pr_err-pr_info-for-unknown-it87-revision.patch
+
+# Add module to detect Ryzen sensors
+# https://github.com/ocerman/zenpower/
+personal/006-Add-git-version-of-zenpower-as-a-builtin-module.patch
+
+# This stops config EXPERT from enabling DEBUG_KERNEL
+personal/0002-Remove-required-DEBUG_KERNEL-set-when-EXPERT-is-y.patch
