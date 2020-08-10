@@ -1,9 +1,11 @@
 # Enabling link time optimization in the Linux kernel 
+# Author: Andi Kleen
 # https://github.com/andikleen/linux-misc/tree/lto-5.8-1
 # https://gist.github.com/telans/728b63dd07c41c9ca6e2ca3d4431db8e
 5.8-lto.patch
 
 # Gentoo distro patches
+# Authors: Gentoo Kernel project
 # https://dev.gentoo.org/~mpagano/genpatches/trunk/5.8/
 gentoo/1500_XATTR_USER_PREFIX.patch
 gentoo/1510_fs-enable-link-security-restrictions-by-default.patch
@@ -25,28 +27,31 @@ gentoo/4567_distro-Gentoo-Kconfig.patch
 #gentoo/5013_enable-cpu-optimizations-for-gcc10.patch
 
 # pf-kernel, a collection of optimization patches
+# Author: Oleksandr Natalenko
 # https://gitlab.com/post-factum/pf-kernel/-/wikis/README
 pf/v5.8-pf1.diff
 
 
 # Support for the AMD Sensor Fusion Hub, mainly found on Ryzen laptops
-# SFH-Add-Support-for-AMD-Sensor-Fusion-Hub.patch
+# misc/SFH-Add-Support-for-AMD-Sensor-Fusion-Hub.patch
 
 
 # Add option to use -fno-semantic-interposition and -fdevirtualize-at-ltrans for the final
 # linking processs. This can be used in tandem with LTO_CP_CLONE. 
 # Also maximizes LTO compression
-personal/0004-Add-option-to-use-fno-semantic-interposition-and-fde.patch
+misc/0004-Add-option-to-use-fno-semantic-interposition-and-fde.patch
+
+# This stops config EXPERT from enabling DEBUG_KERNEL
+misc/0002-Remove-required-DEBUG_KERNEL-set-when-EXPERT-is-y.patch
 
 # Detect a wider range of ITE brand super I/O chips
 # Mirror: https://github.com/xdarklight/hwmon-it87
-personal/003-better-it87-detection_5.4+.patch
+misc/003-better-it87-detection_5.4+.patch
 # Turn unknown ITE chip revision into info msg
-personal/0009-pr_err-pr_info-for-unknown-it87-revision.patch
+misc/0009-pr_err-pr_info-for-unknown-it87-revision.patch
 
 # Add module to detect Ryzen sensors
+# Author: Ondrej Čerman
 # https://github.com/ocerman/zenpower/
-personal/006-Add-git-version-of-zenpower-as-a-builtin-module.patch
+misc/006-Add-git-version-of-zenpower-as-a-builtin-module.patch
 
-# This stops config EXPERT from enabling DEBUG_KERNEL
-personal/0002-Remove-required-DEBUG_KERNEL-set-when-EXPERT-is-y.patch
