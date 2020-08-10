@@ -1,0 +1,22 @@
+Subject: [PATCH 09/10] pr_err -> pr_info for unknown it87 revision
+
+---
+ drivers/gpio/gpio-it87.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpio/gpio-it87.c b/drivers/gpio/gpio-it87.c
+index b497a1d18..34586fa0e 100644
+--- a/drivers/gpio/gpio-it87.c
++++ b/drivers/gpio/gpio-it87.c
+@@ -336,7 +336,7 @@ static int __init it87_gpio_init(void)
+ 		pr_err("no device\n");
+ 		return -ENODEV;
+ 	default:
+-		pr_err("Unknown Chip found, Chip %04x Revision %x\n",
++		pr_info("Unknown Chip found, Chip %04x Revision %x\n",
+ 		       chip_type, chip_rev);
+ 		return -ENODEV;
+ 	}
+-- 
+2.28.0
+

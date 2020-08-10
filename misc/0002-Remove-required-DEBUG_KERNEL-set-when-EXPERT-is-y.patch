@@ -1,0 +1,23 @@
+Subject: [PATCH 2/4] Remove required DEBUG_KERNEL set when EXPERT is =y
+
+While DEBUG_KERNEL allows for more control, it also has the effect on enabling default=y debugging
+---
+ init/Kconfig | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/init/Kconfig b/init/Kconfig
+index 36e25780a..26d7ae4a2 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1462,8 +1462,6 @@ config BPF
+ 
+ menuconfig EXPERT
+ 	bool "Configure standard kernel features (expert users)"
+-	# Unhide debug options, to make the on-by-default options visible
+-	select DEBUG_KERNEL
+ 	help
+ 	  This option allows certain base kernel options and settings
+ 	  to be disabled or tweaked. This is for specialized
+-- 
+2.28.0
+

@@ -1,0 +1,60 @@
+Subject: [PATCH 4/4] Add option to use -fno-semantic-interposition and
+ -fdevirtualize-at-ltrans
+
+For the final linking process.
+
+This can be used in tandem with LTO_CP_CLONE/-fipa-cp-clone.
+
+Do note: while -fipa-cp-clone is enabled by default at -O3,
+only LTO_CP_CLONE will append -fipa-cp-clone to LTO_FINAL_CFLAGS
+---
+ init/Kconfig         | 8 ++++++++
+ scripts/Makefile.lto | 6 +++++-
+ 2 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/init/Kconfig b/init/Kconfig
+index 26d7ae4a2..acb9afa0f 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1427,6 +1427,14 @@ config SINGLE_LINK
+ 	  Use only a single linking step for the final vmlinux, making
+ 	  the build slightly faster.
+ 
++config LTO_AGGRESSIVE
++	bool "Use aggressive optimizations for LTO"
++	depends on LTO
++	help
++	  Flags -fno-semantic-interposition and -fdevirtualize-at-ltrans
++	  are enabled for greater optimization at the expense of poorer
++	  debugging and increased linking time + memory needs.
++
+ config SYSCTL
+ 	bool
+ 
+diff --git a/scripts/Makefile.lto b/scripts/Makefile.lto
+index e41be559d..70b7558a2 100644
+--- a/scripts/Makefile.lto
++++ b/scripts/Makefile.lto
+@@ -13,7 +13,7 @@ export KBUILD_MOD_LDFLAGS
+ export KBUILD_MODPOST_LDFLAGS
+ 
+ ifdef CONFIG_LTO
+-	LTO_CFLAGS := -flto
++	LTO_CFLAGS := -flto -flto-compression-level=9
+ 	LTO_FINAL_CFLAGS := -fuse-linker-plugin
+ 
+ 	# gcc 8.x doesn't generate debuginfo if we don't
+@@ -47,6 +47,10 @@ ifdef CONFIG_LTO_CP_CLONE
+ 	LTO_FINAL_CFLAGS += -fipa-cp-clone
+ endif
+ 
++ifdef CONFIG_LTO_AGGRESSIVE
++	LTO_FINAL_CFLAGS += -fno-semantic-interposition -fdevirtualize-at-ltrans
++endif
++
+ 	# allow extra flags from command line
+ 	LTO_FINAL_CFLAGS += ${LTO_EXTRA_CFLAGS}
+ 
+-- 
+2.28.0
+
